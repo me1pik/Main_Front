@@ -8,6 +8,7 @@ import InputField from '../components/InputField';
 import ReusableModal from '../components/ReusableModal';
 import { CustomSelect } from '../components/CustomSelect';
 import { findEmail } from '../api/user/userApi';
+import SimpleHeader from '../components/SimpleHeader';
 
 // 전화번호 포맷 함수
 const formatPhone = (digits: string) => {
@@ -86,85 +87,88 @@ const FindId: React.FC = () => {
   const closeModal = () => setIsModalOpen(false);
 
   return (
-    <Container>
-      <Form onSubmit={handleSubmit(handleFindAccount)}>
-        <Row>
+    <>
+      <SimpleHeader title='아이디 찾기' />
+      <Container>
+        <Form onSubmit={handleSubmit(handleFindAccount)}>
+          <Row>
+            <Controller
+              name='name'
+              control={control}
+              render={({ field }) => (
+                <InputField
+                  label='이름'
+                  placeholder='홍길동'
+                  error={errors.name?.message}
+                  {...field}
+                  // 키 입력 시 한글 이외 입력 자동 필터링
+                  onInput={(e: React.FormEvent<HTMLInputElement>) => {
+                    const onlyKorean = e.currentTarget.value.replace(
+                      /[^가-힣]/g,
+                      ''
+                    );
+                    field.onChange(onlyKorean);
+                  }}
+                />
+              )}
+            />
+            <Controller
+              name='birthYear'
+              control={control}
+              render={({ field }) => (
+                <InputField
+                  label='태어난 해'
+                  as={CustomSelect}
+                  error={errors.birthYear?.message}
+                  {...field}
+                >
+                  <option value=''>선택하세요</option>
+                  {years.map((year) => (
+                    <option key={year} value={year}>
+                      {year}
+                    </option>
+                  ))}
+                </InputField>
+              )}
+            />
+          </Row>
+
           <Controller
-            name='name'
+            name='phone'
             control={control}
             render={({ field }) => (
               <InputField
-                label='이름'
-                placeholder='홍길동'
-                error={errors.name?.message}
-                {...field}
-                // 키 입력 시 한글 이외 입력 자동 필터링
-                onInput={(e: React.FormEvent<HTMLInputElement>) => {
-                  const onlyKorean = e.currentTarget.value.replace(
-                    /[^가-힣]/g,
-                    ''
-                  );
-                  field.onChange(onlyKorean);
+                label='전화번호'
+                placeholder='010-1234-5678'
+                error={errors.phone?.message}
+                value={field.value}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                  // 숫자만 취득, 최대 11자리
+                  const digits = e.target.value.replace(/\D/g, '').slice(0, 11);
+                  const formatted = formatPhone(digits);
+                  field.onChange(formatted);
                 }}
               />
             )}
           />
-          <Controller
-            name='birthYear'
-            control={control}
-            render={({ field }) => (
-              <InputField
-                label='태어난 해'
-                as={CustomSelect}
-                error={errors.birthYear?.message}
-                {...field}
-              >
-                <option value=''>선택하세요</option>
-                {years.map((year) => (
-                  <option key={year} value={year}>
-                    {year}
-                  </option>
-                ))}
-              </InputField>
-            )}
-          />
-        </Row>
 
-        <Controller
-          name='phone'
-          control={control}
-          render={({ field }) => (
-            <InputField
-              label='전화번호'
-              placeholder='010-1234-5678'
-              error={errors.phone?.message}
-              value={field.value}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                // 숫자만 취득, 최대 11자리
-                const digits = e.target.value.replace(/\D/g, '').slice(0, 11);
-                const formatted = formatPhone(digits);
-                field.onChange(formatted);
-              }}
-            />
-          )}
-        />
+          {errorMessage && <ErrorText>{errorMessage}</ErrorText>}
 
-        {errorMessage && <ErrorText>{errorMessage}</ErrorText>}
+          <Button type='submit' disabled={!isValid || isSubmitting}>
+            {isSubmitting ? '조회 중...' : '아이디 찾기'}
+          </Button>
+        </Form>
 
-        <Button type='submit' disabled={!isValid || isSubmitting}>
-          {isSubmitting ? '조회 중...' : '아이디 찾기'}
-        </Button>
-      </Form>
-
-      <ReusableModal
-        isOpen={isModalOpen}
-        onClose={closeModal}
-        title='아이디 찾기 결과'
-      >
-        <p>입력하신 정보로 찾은 이메일은 아래와 같습니다.</p>
-        <EmailText>{userEmail}</EmailText>
-      </ReusableModal>
-    </Container>
+        <ReusableModal
+          isOpen={isModalOpen}
+          onClose={closeModal}
+          title='아이디 찾기 결과'
+        >
+          <p>입력하신 정보로 찾은 이메일은 아래와 같습니다.</p>
+          <EmailText>{userEmail}</EmailText>
+        </ReusableModal>
+      </Container>
+    </>
   );
 };
 
@@ -174,7 +178,7 @@ export default FindId;
 const Container = styled.div`
   max-width: 600px;
   margin: 0 auto;
-  padding: 1rem;
+  padding: 72px 1rem 1rem 1rem; /* 헤더 높이(56px) + 여유 */
   background: #ffffff;
   border-radius: 8px;
 `;

@@ -98,18 +98,16 @@ const App: React.FC = () => (
       <Route path='/test/payple' element={<PaypleTest />} />
       <Route path='/test/AddCardPayple' element={<AddCardPayple />} />
       <Route path='/Link' element={<Link />} />
+      <Route path='/signup' element={<Signup />} />
+      <Route path='/findid' element={<FindId />} />
+      <Route path='/findPassword' element={<FindPassword />} />
 
       <Route element={<AppLayout />}>
         <Route path='/UpdateProfile' element={<UpdateProfile />} />
         <Route path='/ChangePassword' element={<ChangePassword />} />
         <Route path='/DeliveryManagement' element={<DeliveryManagement />} />
         <Route path='/EditAddress' element={<EditAddress />} />
-
-        <Route path='/signup' element={<Signup />} />
-        <Route path='/findid' element={<FindId />} />
-        <Route path='/findPassword' element={<FindPassword />} />
         {/* User Pages */}
-
         <Route path='/MyinfoList' element={<MyinfoList />} />
         <Route path='/MyStyle' element={<MyStyle />} />
 

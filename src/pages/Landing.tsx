@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import styled, { keyframes } from 'styled-components';
+import styled from 'styled-components';
 import Header from '../components/Landing/Header';
 import LandingPage1 from '../components/Landing/LandingPage1';
 import LandingPage2 from '../components/Landing/LandingPage2';
@@ -177,31 +177,4 @@ const FadeInWrapper = styled.div<{ scrollDirection: 'up' | 'down' }>`
   &:last-child {
     margin-bottom: 0;
   }
-`;
-
-const spin = keyframes`
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
-`;
-
-const LoadingSpinner = styled.div`
-  border: 8px solid rgba(246, 172, 54, 0.3);
-  border-top: 8px solid #f6ac36;
-  border-radius: 50%;
-  width: 60px;
-  height: 60px;
-  animation: ${spin} 1s linear infinite;
-`;
-
-const LoadingOverlay = styled.div`
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 100vh;
-  background: #f5f5f5;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 9999;
 `;

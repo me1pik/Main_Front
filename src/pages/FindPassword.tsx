@@ -7,6 +7,7 @@ import Button from '../components/Button01';
 import InputField from '../components/InputField';
 import ReusableModal from '../components/ReusableModal';
 import { resetPassword } from '../api/user/userApi';
+import SimpleHeader from '../components/SimpleHeader';
 
 // Validation schema
 const schemaFindPassword = yup.object().shape({
@@ -88,114 +89,117 @@ const FindPassword: React.FC = () => {
   const closeModal = () => setIsModalOpen(false);
 
   return (
-    <Container>
-      <Form onSubmit={handleSubmit(onSubmit, onError)}>
-        <Row>
+    <>
+      <SimpleHeader title='비밀번호 찾기' />
+      <Container>
+        <Form onSubmit={handleSubmit(onSubmit, onError)}>
+          <Row>
+            <Controller
+              name='name'
+              control={control}
+              render={({ field }) => (
+                <InputField
+                  label='이름'
+                  id='name'
+                  placeholder='홍길동'
+                  error={errors.name}
+                  {...field}
+                  onInput={(e: React.FormEvent<HTMLInputElement>) => {
+                    const onlyKorean = e.currentTarget.value.replace(
+                      /[^가-힣]/g,
+                      ''
+                    );
+                    field.onChange(onlyKorean);
+                  }}
+                />
+              )}
+            />
+            <Controller
+              name='email'
+              control={control}
+              render={({ field }) => (
+                <InputField
+                  label='이메일'
+                  id='email'
+                  placeholder='user@example.com'
+                  error={errors.email}
+                  {...field}
+                />
+              )}
+            />
+          </Row>
+
           <Controller
-            name='name'
+            name='phone'
             control={control}
             render={({ field }) => (
               <InputField
-                label='이름'
-                id='name'
-                placeholder='홍길동'
-                error={errors.name}
-                {...field}
-                onInput={(e: React.FormEvent<HTMLInputElement>) => {
-                  const onlyKorean = e.currentTarget.value.replace(
-                    /[^가-힣]/g,
-                    ''
-                  );
-                  field.onChange(onlyKorean);
+                label='전화번호'
+                id='phone'
+                placeholder='010-1234-5678'
+                error={errors.phone}
+                value={field.value}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                  const digits = e.target.value.replace(/\D/g, '').slice(0, 11);
+                  const part1 = digits.slice(0, 3);
+                  const part2 = digits.length > 3 ? digits.slice(3, 7) : '';
+                  const part3 = digits.length > 7 ? digits.slice(7, 11) : '';
+                  const formatted = [part1, part2, part3]
+                    .filter(Boolean)
+                    .join('-');
+                  field.onChange(formatted);
                 }}
               />
             )}
           />
+
           <Controller
-            name='email'
+            name='newPassword'
             control={control}
             render={({ field }) => (
               <InputField
-                label='이메일'
-                id='email'
-                placeholder='user@example.com'
-                error={errors.email}
+                label='새 비밀번호'
+                id='newPassword'
+                type='password'
+                placeholder='새 비밀번호를 입력하세요'
+                error={errors.newPassword}
                 {...field}
               />
             )}
           />
-        </Row>
 
-        <Controller
-          name='phone'
-          control={control}
-          render={({ field }) => (
-            <InputField
-              label='전화번호'
-              id='phone'
-              placeholder='010-1234-5678'
-              error={errors.phone}
-              value={field.value}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                const digits = e.target.value.replace(/\D/g, '').slice(0, 11);
-                const part1 = digits.slice(0, 3);
-                const part2 = digits.length > 3 ? digits.slice(3, 7) : '';
-                const part3 = digits.length > 7 ? digits.slice(7, 11) : '';
-                const formatted = [part1, part2, part3]
-                  .filter(Boolean)
-                  .join('-');
-                field.onChange(formatted);
-              }}
-            />
-          )}
-        />
+          <Controller
+            name='confirmPassword'
+            control={control}
+            render={({ field }) => (
+              <InputField
+                label='비밀번호 확인'
+                id='confirmPassword'
+                type='password'
+                placeholder='비밀번호를 다시 입력하세요'
+                error={errors.confirmPassword}
+                {...field}
+              />
+            )}
+          />
 
-        <Controller
-          name='newPassword'
-          control={control}
-          render={({ field }) => (
-            <InputField
-              label='새 비밀번호'
-              id='newPassword'
-              type='password'
-              placeholder='새 비밀번호를 입력하세요'
-              error={errors.newPassword}
-              {...field}
-            />
-          )}
-        />
+          {/* API 에러 메시지 */}
+          {errorMessage && <ErrorText>{errorMessage}</ErrorText>}
 
-        <Controller
-          name='confirmPassword'
-          control={control}
-          render={({ field }) => (
-            <InputField
-              label='비밀번호 확인'
-              id='confirmPassword'
-              type='password'
-              placeholder='비밀번호를 다시 입력하세요'
-              error={errors.confirmPassword}
-              {...field}
-            />
-          )}
-        />
+          <Button type='submit' disabled={!isValid || isSubmitting}>
+            {isSubmitting ? '조회 중...' : '비밀번호 변경'}
+          </Button>
+        </Form>
 
-        {/* API 에러 메시지 */}
-        {errorMessage && <ErrorText>{errorMessage}</ErrorText>}
-
-        <Button type='submit' disabled={!isValid || isSubmitting}>
-          {isSubmitting ? '조회 중...' : '비밀번호 변경'}
-        </Button>
-      </Form>
-
-      <ReusableModal
-        isOpen={isModalOpen}
-        onClose={closeModal}
-        title='비밀번호 찾기 결과'
-      >
-        <p>{successMessage}</p>
-      </ReusableModal>
-    </Container>
+        <ReusableModal
+          isOpen={isModalOpen}
+          onClose={closeModal}
+          title='비밀번호 찾기 결과'
+        >
+          <p>{successMessage}</p>
+        </ReusableModal>
+      </Container>
+    </>
   );
 };
 
@@ -205,7 +209,7 @@ export default FindPassword;
 const Container = styled.div`
   max-width: 600px;
   margin: 0 auto;
-  padding: 1rem;
+  padding: 72px 1rem 1rem 1rem; /* 헤더 높이(56px) + 여유 */
   background: #ffffff;
   border-radius: 8px;
 `;
