@@ -7,6 +7,7 @@ import Cookies from 'js-cookie';
 import { BiTime } from 'react-icons/bi';
 import { FaUserCircle } from 'react-icons/fa';
 import { useHeaderInfo } from '../api/user/userApi';
+import { useQuery } from '@tanstack/react-query';
 
 import AlarmIcon from '../assets/Header/AlarmIcon.svg';
 import BasketIcon from '../assets/Header/BasketIcon.svg';
@@ -216,7 +217,12 @@ const UnifiedHeader: React.FC<UnifiedHeaderProps> = ({
   const boxRef = useRef<HTMLDivElement>(null);
 
   // react-query로 헤더 정보 패칭
-  const { data: headerInfo } = useHeaderInfo();
+  const accessToken = Cookies.get('accessToken');
+  const { data: headerInfo, isLoading } = useQuery({
+    queryKey: ['userHeaderInfo'],
+    queryFn: useHeaderInfo,
+    enabled: !!accessToken,
+  });
 
   // 헤더 정보 조회 (로그인/닉네임 등)
   useEffect(() => {

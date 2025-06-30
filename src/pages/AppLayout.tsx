@@ -14,9 +14,16 @@ const AppLayout: React.FC = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
+    const accessToken = Cookies.get('accessToken');
+    if (!accessToken) return;
+    // 사용자 정보 API 호출
+  }, []);
+
+  useEffect(() => {
     const token = Cookies.get('accessToken');
     const publicPaths = [
       '/signup',
+      '/findId',
       '/findid',
       '/findPassword',
       '/landing',
