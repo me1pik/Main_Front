@@ -67,67 +67,15 @@ const ScrollFadeIn: React.FC<ScrollFadeInProps> = ({ children }) => {
 };
 
 const Landing: React.FC = () => {
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    document.body.classList.add('landing');
-
-    const images = document.querySelectorAll('img');
-    let loadedCount = 0;
-    const totalImages = images.length;
-
-    if (totalImages === 0) {
-      setLoading(false);
-      return;
-    }
-
-    const handleImageLoadOrError = () => {
-      loadedCount += 1;
-
-      if (loadedCount === totalImages) {
-        setLoading(false);
-      }
-    };
-
-    images.forEach((img) => {
-      if (img.complete) {
-        handleImageLoadOrError();
-      } else {
-        img.addEventListener('load', handleImageLoadOrError);
-        img.addEventListener('error', handleImageLoadOrError);
-      }
-    });
-
-    return () => {
-      images.forEach((img) => {
-        img.removeEventListener('load', handleImageLoadOrError);
-        img.removeEventListener('error', handleImageLoadOrError);
-      });
-      document.body.classList.remove('landing');
-    };
-  }, []);
-
-  if (loading) {
-    return (
-      <LoadingOverlay>
-        <LoadingSpinner />
-      </LoadingOverlay>
-    );
-  }
-
   return (
     <LandingContainer>
       <BackgroundWrapper>
         <BackgroundStripe2 />
-
         <BackgroundStripe1 />
       </BackgroundWrapper>
-
       <Header />
-
       <ContentWrapper>
         <LandingPage1 />
-
         <ScrollFadeIn>
           <LandingPage2 />
         </ScrollFadeIn>
@@ -147,7 +95,6 @@ const Landing: React.FC = () => {
           <LandingPage7 />
         </ScrollFadeIn>
       </ContentWrapper>
-
       <ScrollFadeIn>
         <Footer />
       </ScrollFadeIn>

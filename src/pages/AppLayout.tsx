@@ -1,13 +1,12 @@
 // src/layouts/AppLayout.tsx
 import React, { useEffect } from 'react';
 import { useLocation, useNavigate, Outlet } from 'react-router-dom';
-import styled, { keyframes } from 'styled-components';
+import styled from 'styled-components';
 import Cookies from 'js-cookie';
 
 import UnifiedHeader from '../components/UnifiedHeader';
 import BottomNav from '../components/BottomNav1';
 import useHeaderConfig from '../hooks/useHeaderConfig';
-import useImageLoader from '../hooks/useImageLoader';
 
 const AppLayout: React.FC = () => {
   const location = useLocation();
@@ -46,19 +45,6 @@ const AppLayout: React.FC = () => {
     disablePadding,
   } = useHeaderConfig(location.pathname);
 
-  const { loading, handleBackWithExit } = useImageLoader(
-    navigate,
-    location.pathname
-  );
-
-  if (loading) {
-    return (
-      <LoadingOverlay>
-        <LoadingSpinner />
-      </LoadingOverlay>
-    );
-  }
-
   // BottomNav 표시 대상 경로
   const bottomNavPaths = [
     '/home',
@@ -76,22 +62,20 @@ const AppLayout: React.FC = () => {
         <UnifiedHeader
           variant='twoDepth'
           title={headerTitle}
-          onBack={handleBackWithExit}
+          onBack={undefined}
         />
       )}
       {includeHeader4 && (
         <UnifiedHeader
           variant='threeDepth'
           title={headerTitle}
-          onBack={handleBackWithExit}
+          onBack={undefined}
         />
       )}
-
       {/* transient prop으로 변경 */}
       <ContentContainer $disablePadding={disablePadding}>
         <Outlet />
       </ContentContainer>
-
       {includeBottomNav && bottomNavPaths.includes(location.pathname) && (
         <BottomNav />
       )}
@@ -102,11 +86,6 @@ const AppLayout: React.FC = () => {
 export default AppLayout;
 
 // --- Styled Components ---
-
-const spin = keyframes`
-  0%   { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
-`;
 
 const AppContainer = styled.div`
   display: flex;
@@ -123,26 +102,4 @@ const ContentContainer = styled.div<{
   overflow: auto;
   min-height: 100vh;
   background: #fff;
-`;
-
-const LoadingOverlay = styled.div`
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 100vh;
-  background: #f5f5f5;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 9999;
-`;
-
-const LoadingSpinner = styled.div`
-  border: 8px solid rgba(246, 172, 54, 0.3);
-  border-top: 8px solid #f6ac36;
-  border-radius: 50%;
-  width: 60px;
-  height: 60px;
-  animation: ${spin} 1s linear infinite;
 `;
