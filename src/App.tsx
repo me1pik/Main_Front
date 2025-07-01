@@ -84,13 +84,14 @@ import UpdateProfile from './pages/profile/UpdateProfile';
 import ChangePassword from './pages/profile/ChangePassword';
 import DeliveryManagement from './pages/profile/DeliveryManagement';
 import EditAddress from './pages/profile/EditAddress';
+import NotFound from './pages/NotFound';
 
 const App: React.FC = () => (
   <Router>
     <Routes>
       {/* Landing & Auth */}
       <Route path='/landing' element={<Landing />} />
-      <Route path='/' element={<Navigate to='/landing' replace />} />
+      <Route path='/' element={<Navigate to='/home' replace />} />
       <Route path='/login' element={<Login />} />
       <Route path='/ladyLogin' element={<ReadyLogin />} />
       <Route path='/TestLogin' element={<TestLogin />} />
@@ -221,6 +222,7 @@ const App: React.FC = () => (
 
         <Route path='/ticketDetail/:ticketId' element={<TicketDetail />} />
       </Route>
+      <Route path='*' element={<NotFound />} />
     </Routes>
   </Router>
 );
