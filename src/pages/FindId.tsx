@@ -159,11 +159,7 @@ const FindId: React.FC = () => {
           </Button>
         </Form>
 
-        <ReusableModal
-          isOpen={isModalOpen}
-          onClose={closeModal}
-          title='아이디 찾기 결과'
-        >
+        <ReusableModal isOpen={isModalOpen} onClose={closeModal} title=' 결과'>
           <p>입력하신 정보로 찾은 이메일은 아래와 같습니다.</p>
           <EmailText>{userEmail}</EmailText>
         </ReusableModal>
