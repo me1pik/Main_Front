@@ -1,5 +1,5 @@
 // src/page/Login.tsx
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import styled, { ThemeProvider } from 'styled-components';
 import { useForm, Controller } from 'react-hook-form';
@@ -27,6 +27,7 @@ const Login: React.FC = () => {
   const navigate = useNavigate();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalMessage, setModalMessage] = useState('');
+  const [autoLogin, setAutoLogin] = useState(false);
 
   const {
     control,
@@ -40,6 +41,16 @@ const Login: React.FC = () => {
 
   const handleModalClose = () => setIsModalOpen(false);
 
+  useEffect(() => {
+    const auto = localStorage.getItem('autoLogin');
+    const email = localStorage.getItem('autoLoginEmail');
+    const password = localStorage.getItem('autoLoginPassword');
+    if (auto === 'true' && email && password) {
+      handleLoginClick({ email, password });
+    }
+    // eslint-disable-next-line
+  }, []);
+
   const handleLoginClick = async (data: LoginFormValues) => {
     try {
       const response = (await LoginPost(
@@ -50,6 +61,30 @@ const Login: React.FC = () => {
 
       localStorage.setItem('accessToken', accessToken);
       localStorage.setItem('refreshToken', refreshToken);
+
+      if (autoLogin) {
+        localStorage.setItem('autoLogin', 'true');
+        localStorage.setItem('autoLoginEmail', data.email);
+        localStorage.setItem('autoLoginPassword', data.password);
+      } else {
+        localStorage.removeItem('autoLogin');
+        localStorage.removeItem('autoLoginEmail');
+        localStorage.removeItem('autoLoginPassword');
+      }
+
+      // === 네이티브 앱에 로그인 정보 전달 ===
+      if (window.nativeApp && window.nativeApp.saveLoginInfo) {
+        window.nativeApp.saveLoginInfo({
+          id: data.email, // 또는 서버에서 받은 user id
+          email: data.email,
+          name: '', // 필요하다면 서버에서 받은 이름
+          token: accessToken,
+          refreshToken: refreshToken,
+          expiresAt: new Date(
+            Date.now() + 1000 * 60 * 60 * 24 * 7
+          ).toISOString(), // 예시: 7일 뒤 만료
+        });
+      }
 
       const membership: MembershipInfo = await getMembershipInfo();
 
@@ -115,7 +150,11 @@ const Login: React.FC = () => {
 
             <CheckboxWrapper>
               <CheckboxLabel>
-                <CheckboxInput type='checkbox' />
+                <CheckboxInput
+                  type='checkbox'
+                  checked={autoLogin}
+                  onChange={() => setAutoLogin((prev) => !prev)}
+                />
                 <CheckboxText>자동 로그인</CheckboxText>
               </CheckboxLabel>
             </CheckboxWrapper>
