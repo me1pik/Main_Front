@@ -1,9 +1,11 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import {
   BrowserRouter as Router,
   Routes,
   Route,
   Navigate,
+  useLocation,
+  useNavigate,
 } from 'react-router-dom';
 import AppLayout from './pages/AppLayout';
 
@@ -86,8 +88,50 @@ import DeliveryManagement from './pages/profile/DeliveryManagement';
 import EditAddress from './pages/profile/EditAddress';
 import NotFound from './pages/NotFound';
 
+import Cookies from 'js-cookie';
+import { Axios } from './Axios';
+
+const NativeLoginSync: React.FC = () => {
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    function handleLoginInfoReceived(e: any) {
+      const loginInfo = e.detail;
+      if (loginInfo.isLoggedIn && loginInfo.userInfo) {
+        // 토큰 저장
+        localStorage.setItem('accessToken', loginInfo.userInfo.token);
+        Cookies.set('accessToken', loginInfo.userInfo.token, { path: '/' });
+        Axios.defaults.headers.Authorization = `Bearer ${loginInfo.userInfo.token}`;
+        // 필요하다면 refreshToken도 저장
+        // localStorage.setItem('refreshToken', loginInfo.userInfo.refreshToken);
+        // Cookies.set('refreshToken', loginInfo.userInfo.refreshToken, { path: '/' });
+        // 로그인 후 홈으로 이동
+        if (location.pathname === '/login') {
+          navigate('/home', { replace: true });
+        }
+      } else {
+        // 로그아웃 처리
+        localStorage.removeItem('accessToken');
+        Cookies.remove('accessToken');
+        if (location.pathname !== '/login') {
+          navigate('/login', { replace: true });
+        }
+      }
+    }
+
+    window.addEventListener('loginInfoReceived', handleLoginInfoReceived);
+    return () => {
+      window.removeEventListener('loginInfoReceived', handleLoginInfoReceived);
+    };
+  }, [location, navigate]);
+
+  return null;
+};
+
 const App: React.FC = () => (
   <Router>
+    <NativeLoginSync />
     <Routes>
       {/* Landing & Auth */}
       <Route path='/landing' element={<Landing />} />
