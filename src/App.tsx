@@ -89,7 +89,7 @@ import EditAddress from './pages/profile/EditAddress';
 import NotFound from './pages/NotFound';
 
 import Cookies from 'js-cookie';
-import { Axios } from './Axios';
+import { Axios } from './api/Axios';
 
 const NativeLoginSync: React.FC = () => {
   const location = useLocation();
