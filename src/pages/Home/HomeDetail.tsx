@@ -31,7 +31,7 @@ interface ProductDetail {
   discountPrice: number;
   discountPercent: number;
   product_img: string[];
-  sizes: { size: string; measurements: Record<string, any> }[];
+  sizes: { size: string; measurements: Record<string, string | number> }[];
   size_picture: string;
   category: string;
   season: string;
@@ -116,7 +116,11 @@ const HomeDetail: React.FC<HomeDetailProps> = ({ id: propId }) => {
       const startX = e.clientX;
       const onMove = (ev: MouseEvent) => {
         if (Math.abs(ev.clientX - startX) > 50) {
-          ev.clientX - startX > 0 ? handleSwipeRight() : handleSwipeLeft();
+          if (ev.clientX - startX > 0) {
+            handleSwipeRight();
+          } else {
+            handleSwipeLeft();
+          }
           window.removeEventListener('mousemove', onMove);
           window.removeEventListener('mouseup', onUp);
         }
@@ -265,7 +269,6 @@ const HomeDetail: React.FC<HomeDetailProps> = ({ id: propId }) => {
             />
           )}
           {selectedService === 'purchase' && <PaymentMethod />}
-          {selectedService === '' && <Message>서비스를 선택하세요</Message>}
         </ConditionalContainer>
 
         <Separator />
@@ -372,12 +375,6 @@ const ConditionalContainer = styled.div`
 const Separator = styled.div`
   border: 1px solid #ccc;
   margin: 30px 0;
-`;
-
-const Message = styled.p`
-  text-align: center;
-  font-size: 16px;
-  color: gray;
 `;
 
 const ErrorMsg = styled.div`

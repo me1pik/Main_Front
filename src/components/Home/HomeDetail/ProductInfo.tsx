@@ -26,8 +26,9 @@ const ProductInfo: React.FC<ProductInfoProps> = ({ item, productId }) => {
       await addToCloset(productId);
       setModalTitle('성공');
       setModalMessage('찜 목록에 추가되었습니다!');
-    } catch (err: any) {
-      const status = err?.response?.status;
+    } catch (err: unknown) {
+      const error = err as { response?: { status?: number } };
+      const status = error?.response?.status;
       if (status === 409) setModalMessage('이미 찜한 상품입니다.');
       else if (status === 401) setModalMessage('로그인이 필요합니다.');
       else setModalMessage('에러가 발생했습니다.');
@@ -41,7 +42,8 @@ const ProductInfo: React.FC<ProductInfoProps> = ({ item, productId }) => {
   return (
     <InfoContainer>
       <CategoryText>
-        브랜드 <span className='gt'>&gt;</span> {item.brand}
+        브랜드 <span className='gt'>&gt;</span>{' '}
+        <span className='brand'>{item.brand}</span>
       </CategoryText>
       <ProductTitle>
         {item.product_num} / {item.name}
@@ -82,15 +84,20 @@ const InfoContainer = styled.div`
 `;
 const CategoryText = styled.p`
   font-size: 11px;
+  font-weight: 400;
+
   color: #000;
   & > span.gt {
     color: #ddd;
     padding: 0 4px;
   }
+  & > span.brand {
+    font-weight: 800;
+  }
 `;
 const ProductTitle = styled.h2`
   font-weight: 700;
-  font-size: 15px;
+  font-size: 16px;
   margin: 8px 0;
 `;
 const ContentContainer = styled.div`
@@ -104,9 +111,11 @@ const PriceContainer = styled.div`
 `;
 const OriginalPrice = styled.span`
   font-weight: 700;
-  font-size: 13px;
-  text-decoration: line-through;
-  color: #999;
+  font-size: 12px;
+  line-height: 13px;
+  text-decoration-line: line-through;
+
+  color: #999999;
 `;
 const DiscountRow = styled.div`
   display: flex;
@@ -118,12 +127,12 @@ const DiscountPercent = styled.span`
   color: #f6ae24;
   margin-right: 10px;
   font-weight: 900;
-  font-size: 16px;
+  font-size: 18px;
 `;
 
 const DiscountPrice = styled.span`
   font-weight: 900;
-  font-size: 16px;
+  font-size: 18px;
   line-height: 20px;
 `;
 
