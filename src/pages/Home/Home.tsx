@@ -58,6 +58,11 @@ const Home: React.FC = () => {
   const [isSearchModalOpen, setSearchModalOpen] = useState(false);
   // 검색 입력 임시 상태
   const [searchInput, setSearchInput] = useState(searchQuery);
+  // 검색 히스토리(최근 검색어)
+  const [searchHistory, setSearchHistory] = useState<string[]>(() => {
+    const saved = localStorage.getItem('searchHistory');
+    return saved ? JSON.parse(saved) : [];
+  });
 
   // react-query 상품 데이터
   const {
@@ -171,6 +176,17 @@ const Home: React.FC = () => {
     }
   };
 
+  // 히스토리 저장 함수
+  const addToHistory = (keyword: string) => {
+    if (!keyword.trim()) return;
+    setSearchHistory((prev) => {
+      const filtered = prev.filter((item) => item !== keyword);
+      const newHistory = [keyword, ...filtered].slice(0, MAX_HISTORY);
+      localStorage.setItem('searchHistory', JSON.stringify(newHistory));
+      return newHistory;
+    });
+  };
+
   return (
     <MainContainer>
       {/* 로그인 안내 모달 */}
@@ -232,13 +248,12 @@ const Home: React.FC = () => {
               onKeyDown={(e) => {
                 if (e.key === 'Enter') {
                   setSearchQuery(searchInput);
+                  setSelectedCategory('All');
                   setSearchParams(
-                    {
-                      ...Object.fromEntries(searchParams.entries()),
-                      search: searchInput,
-                    },
+                    { category: 'All', search: searchInput },
                     { replace: true }
                   );
+                  addToHistory(searchInput);
                   setSearchModalOpen(false);
                 }
               }}
@@ -246,13 +261,12 @@ const Home: React.FC = () => {
             <ModalSearchIconButton
               onClick={() => {
                 setSearchQuery(searchInput);
+                setSelectedCategory('All');
                 setSearchParams(
-                  {
-                    ...Object.fromEntries(searchParams.entries()),
-                    search: searchInput,
-                  },
+                  { category: 'All', search: searchInput },
                   { replace: true }
                 );
+                addToHistory(searchInput);
                 setSearchModalOpen(false);
               }}
               aria-label='검색'
@@ -260,6 +274,32 @@ const Home: React.FC = () => {
               <img src={SearchIconSvg} alt='검색' />
             </ModalSearchIconButton>
           </ModalSearchBar>
+          {/* 최근 검색어 히스토리 */}
+          {searchHistory.length > 0 && (
+            <HistoryContainer>
+              <HistoryTitle>최근 검색어</HistoryTitle>
+              <HistoryList>
+                {searchHistory.map((item, idx) => (
+                  <HistoryItem
+                    key={item + idx}
+                    onClick={() => {
+                      setSearchInput(item);
+                      setSearchQuery(item);
+                      setSelectedCategory('All');
+                      setSearchParams(
+                        { category: 'All', search: item },
+                        { replace: true }
+                      );
+                      addToHistory(item);
+                      setSearchModalOpen(false);
+                    }}
+                  >
+                    {item}
+                  </HistoryItem>
+                ))}
+              </HistoryList>
+            </HistoryContainer>
+          )}
         </ReusableModal>
       </ControlsContainer>
 
@@ -528,3 +568,48 @@ const ModalSearchIconButton = styled.button`
     filter: brightness(0.7);
   }
 `;
+
+// 최근 검색어 히스토리 스타일
+const HistoryContainer = styled.div`
+  margin-top: 24px;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+`;
+
+const HistoryTitle = styled.div`
+  font-size: 14px;
+  color: #888;
+  margin-bottom: 8px;
+  font-weight: 600;
+`;
+
+const HistoryList = styled.ul`
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 0;
+  margin: 0;
+`;
+
+const HistoryItem = styled.li`
+  list-style: none;
+  background: #f5f5f5;
+  color: #333;
+  border-radius: 16px;
+  padding: 6px 16px;
+  font-size: 15px;
+  cursor: pointer;
+  border: 1px solid #e0e0e0;
+  transition:
+    background 0.2s,
+    color 0.2s;
+  &:hover {
+    background: #ffe6b8;
+    color: #f6ae24;
+  }
+`;
+
+// 최근 검색어 최대 개수
+const MAX_HISTORY = 8;
