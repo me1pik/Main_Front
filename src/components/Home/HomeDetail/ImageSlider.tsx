@@ -104,9 +104,9 @@ const Slide = styled.div`
 `;
 
 const Image = styled.img`
-  max-width: 100%;
-  max-height: 500px;
-  object-fit: contain;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 `;
 
 const Indicators = styled.div`
@@ -120,7 +120,7 @@ const Dot = styled.div<{ $active: boolean }>`
   width: 12px;
   height: 12px;
   margin: 0 4px;
-  border-radius: 50%;
-  background-color: ${(p) => (p.$active ? '#FFD700' : '#FFF')};
+
+  background-color: ${(p) => (p.$active ? '#F6AE24' : '#FFF')};
   border: 1px solid #ccc;
 `;
