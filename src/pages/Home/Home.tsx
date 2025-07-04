@@ -22,6 +22,7 @@ import ArrowIconSvg from '../../assets/ArrowIcon.svg';
 import ReusableModal from '../../components/ReusableModal';
 import FilterContainer from '../../components/Home/FilterContainer';
 import SearchIconSvg from '../../assets/Home/SearchIcon.svg';
+import MelpikGuideBanner from '../../components/MelpikGuideBanner';
 
 /**
  * Home(상품 리스트) 페이지 - 최적화 버전
@@ -246,6 +247,7 @@ const Home: React.FC = () => {
       </ReusableModal>
 
       {/* 서브헤더 */}
+      <MelpikGuideBanner />
       <SubHeader
         selectedCategory={selectedCategory}
         setSelectedCategory={(cat) => {
