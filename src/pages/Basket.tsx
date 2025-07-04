@@ -1,15 +1,14 @@
 // src/pages/Basket.tsx
 import React, { useState, useEffect } from 'react';
-import styled from 'styled-components';
+import styled, { keyframes } from 'styled-components';
 import BasketIcon from '../assets/Basket/BasketIcon.svg';
 import PriceIcon from '../assets/Basket/PriceIcon.svg';
 import ProductInfoIcon from '../assets/Basket/ProductInfoIcon.svg';
 import ServiceInfoIcon from '../assets/Basket/ServiceInfoIcon.svg';
 import FixedBottomBar from '../components/FixedBottomBar';
-import Spinner from '../components/Spinner';
-import { useNavigate } from 'react-router-dom';
 import ReusableModal2 from '../components/ReusableModal2';
 import { getCartItems, deleteCartItem } from '../api/cart/cart';
+import { useNavigate } from 'react-router-dom';
 
 interface BasketItemForPayment {
   id: number;
@@ -47,13 +46,112 @@ const getServiceLabel = (type: string) => {
   return type;
 };
 
+const shimmer = keyframes`
+  0% { background-position: 0px 0; }
+  100% { background-position: calc(200px + 100%) 0; }
+`;
+
+const SkeletonBox = styled.div<{ width: string; height: string }>`
+  width: ${({ width }) => width};
+  height: ${({ height }) => height};
+  background: #eee;
+  background-image: linear-gradient(90deg, #eee 0px, #f5f5f5 20px, #eee 40px);
+  background-size: 80px 100%;
+  background-repeat: no-repeat;
+  animation: ${shimmer} 1.2s infinite linear;
+  border-radius: 4px;
+`;
+
+const SkeletonText = styled(SkeletonBox)``;
+
+const SkeletonButton = styled(SkeletonBox)`
+  border-radius: 8px;
+`;
+
+const SkeletonImage = styled.div`
+  width: 100%;
+  height: 210px;
+  background: #eee;
+  background-image: linear-gradient(90deg, #eee 0px, #f5f5f5 40px, #eee 80px);
+  background-size: 200px 100%;
+  background-repeat: no-repeat;
+  border-radius: 8px;
+  animation: ${shimmer} 1.2s infinite linear;
+`;
+
+const BasketSkeleton: React.FC = () => (
+  <Container>
+    <Header>
+      <SkeletonBox width='20px' height='20px' style={{ marginRight: 8 }} />
+      <SkeletonText width='80px' height='18px' />
+    </Header>
+    {Array.from({ length: 2 }).map((_, idx) => (
+      <Item key={idx}>
+        <ContentWrapper>
+          <ItemDetails>
+            <SkeletonText
+              width='40%'
+              height='14px'
+              style={{ marginBottom: 8 }}
+            />
+            <SkeletonText
+              width='60%'
+              height='16px'
+              style={{ marginBottom: 18 }}
+            />
+            <SkeletonText
+              width='30%'
+              height='13px'
+              style={{ marginBottom: 18 }}
+            />
+            <SkeletonText
+              width='80%'
+              height='13px'
+              style={{ marginBottom: 10 }}
+            />
+            <SkeletonText
+              width='60%'
+              height='13px'
+              style={{ marginBottom: 10 }}
+            />
+            <SkeletonText
+              width='50%'
+              height='13px'
+              style={{ marginBottom: 10 }}
+            />
+          </ItemDetails>
+          <RightSection>
+            <ItemImageContainer>
+              <SkeletonBox
+                width='20px'
+                height='20px'
+                style={{ position: 'absolute', left: 0, top: 0 }}
+              />
+              <SkeletonImage />
+            </ItemImageContainer>
+          </RightSection>
+        </ContentWrapper>
+        <ButtonContainer>
+          <SkeletonButton
+            width='91px'
+            height='46px'
+            style={{ marginRight: 10 }}
+          />
+          <SkeletonButton width='91px' height='46px' />
+        </ButtonContainer>
+      </Item>
+    ))}
+    <SkeletonButton width='100%' height='56px' style={{ marginTop: 20 }} />
+  </Container>
+);
+
 const Basket: React.FC = () => {
-  const navigate = useNavigate();
   const [items, setItems] = useState<BasketItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isBuyModalOpen, setIsBuyModalOpen] = useState(false);
   const [selectedItemId, setSelectedItemId] = useState<number | null>(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
     setLoading(true);
@@ -167,11 +265,7 @@ const Basket: React.FC = () => {
   };
 
   if (loading) {
-    return (
-      <Container>
-        <Spinner />
-      </Container>
-    );
+    return <BasketSkeleton />;
   }
 
   return (
@@ -516,7 +610,6 @@ const ItemImageContainer = styled.div`
   position: relative;
   width: 100%;
   height: 210px;
-
   @media (min-width: 600px) {
     width: 200px;
     height: auto;
@@ -538,7 +631,6 @@ const ButtonContainer = styled.div`
   gap: 10px;
   margin-top: 20px;
   align-self: flex-end;
-
   @media (max-width: 600px) {
     margin-top: 10px;
   }
@@ -553,14 +645,11 @@ const DeleteButton = styled.button`
   border-radius: 6px;
   cursor: pointer;
   border: 1px solid #ddd;
-
   font-weight: 800;
   font-size: 14px;
   line-height: 15px;
   text-align: center;
-
   color: #999999;
-
   @media (max-width: 600px) {
     width: 60px;
     height: 40px;
@@ -577,21 +666,14 @@ const PurchaseButton = styled.button`
   border-radius: 6px;
   cursor: pointer;
   border: 1px solid #ddd;
-
   font-weight: 800;
   font-size: 14px;
   line-height: 15px;
   text-align: center;
-
   @media (max-width: 600px) {
     width: 60px;
     height: 40px;
   }
-`;
-
-const Icon = styled.img`
-  width: auto;
-  height: auto;
 `;
 
 const Code = styled.span`
@@ -604,6 +686,7 @@ const Code = styled.span`
     font-size: 13px;
   }
 `;
+
 const Slash = styled.span`
   font-weight: 700;
   font-size: 15px;
@@ -613,6 +696,7 @@ const Slash = styled.span`
     display: none;
   }
 `;
+
 const Name = styled.span`
   font-weight: 700;
   font-size: 15px;
@@ -621,4 +705,9 @@ const Name = styled.span`
     margin-top: 4px;
     font-size: 14px;
   }
+`;
+
+const Icon = styled.img`
+  width: auto;
+  height: auto;
 `;
