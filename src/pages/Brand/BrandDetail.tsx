@@ -21,6 +21,7 @@ import HomeIcon from '../../assets/Header/HomeIcon.svg';
 import ReusableModal from '../../components/ReusableModal';
 import SearchIconSvg from '../../assets/Home/SearchIcon.svg';
 import ArrowIconSvg from '../../assets/ArrowIcon.svg';
+import SkeletonItemList from '../../components/Home/SkeletonItemList';
 
 interface LocalBrand {
   id: number;
@@ -223,12 +224,23 @@ const BrandDetail: React.FC = () => {
     });
   };
 
+  // UIItem 매핑 (filteredProducts 기준)
+  const uiItems: UIItem[] = filteredProducts.map((it) => ({
+    id: it.id.toString(),
+    image: it.image || '',
+    brand: brand?.name || '',
+    description: it.description || '',
+    price: it.price || 0,
+    discount: it.discount || 0,
+    isLiked: false,
+  }));
+
   // 검색 결과 없음 카운트다운
   const [noResultCountdown, setNoResultCountdown] = useState(3);
   const countdownRef = React.useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
-    if (!loadingProducts && filteredProducts.length === 0 && searchTerm) {
+    if (!loadingProducts && uiItems.length === 0 && searchTerm) {
       setNoResultCountdown(3);
       if (countdownRef.current) clearInterval(countdownRef.current);
       countdownRef.current = setInterval(() => {
@@ -247,18 +259,7 @@ const BrandDetail: React.FC = () => {
       if (countdownRef.current) clearInterval(countdownRef.current);
     };
     // eslint-disable-next-line
-  }, [loadingProducts, filteredProducts.length, searchTerm]);
-
-  // UIItem 매핑 (filteredProducts 기준)
-  const uiItems: UIItem[] = filteredProducts.map((it) => ({
-    id: it.id.toString(),
-    image: it.image || '',
-    brand: brand?.name || '',
-    description: it.description || '',
-    price: it.price || 0,
-    discount: it.discount || 0,
-    isLiked: false,
-  }));
+  }, [loadingProducts, uiItems.length, searchTerm]);
 
   // UI 렌더링
   return (
@@ -361,17 +362,22 @@ const BrandDetail: React.FC = () => {
 
         <MainContent>
           {loadingProducts ? (
-            <StatText>제품 목록을 불러오는 중...</StatText>
+            <SkeletonItemList
+              columns={viewCols}
+              count={allProducts.length || 8}
+            />
           ) : errorProducts ? (
             <StatText>{errorProducts}</StatText>
           ) : uiItems.length === 0 && searchTerm ? (
-            <NoResultTextBrand>
-              검색 결과가 없습니다
-              <br />
-              <CountdownTextBrand>
-                {noResultCountdown}초 후 전체 카테고리로 돌아갑니다
-              </CountdownTextBrand>
-            </NoResultTextBrand>
+            <OverlayWrapper>
+              <OverlayMessage>
+                검색 결과가 없습니다
+                <br />
+                <CountdownText>
+                  {noResultCountdown}초 후 전체 카테고리로 돌아갑니다
+                </CountdownText>
+              </OverlayMessage>
+            </OverlayWrapper>
           ) : (
             <ItemList
               items={uiItems}
@@ -678,18 +684,32 @@ const MainContent = styled.div`
   justify-content: center;
   align-items: center;
 `;
-const NoResultTextBrand = styled.div`
-  width: 100%;
-  text-align: center;
-  color: #888;
-  font-size: 18px;
-  font-weight: 500;
-  padding: 60px 0 80px 0;
-  letter-spacing: -0.5px;
-`;
-const CountdownTextBrand = styled.div`
+
+const CountdownText = styled.div`
   margin-top: 18px;
   font-size: 15px;
   color: #f6ae24;
   font-weight: 600;
+`;
+
+// 오버레이 스타일 추가
+const OverlayWrapper = styled.div`
+  position: relative;
+  width: 100%;
+  min-height: 400px;
+`;
+const OverlayMessage = styled.div`
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: rgba(255, 255, 255, 0.85);
+  padding: 40px 32px;
+  border-radius: 18px;
+
+  font-size: 2rem;
+  font-weight: 800;
+  color: #222;
+  text-align: center;
+  z-index: 2;
 `;

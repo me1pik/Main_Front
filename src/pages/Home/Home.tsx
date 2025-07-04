@@ -9,7 +9,6 @@ import React, {
 } from 'react';
 import { useNavigate, useSearchParams, useLocation } from 'react-router-dom';
 import styled from 'styled-components';
-import Spinner from '../../components/Spinner';
 import ItemList, { UIItem } from '../../components/Home/ItemList';
 import Footer from '../../components/Home/Footer';
 import SubHeader from '../../components/Home/SubHeader';
@@ -23,6 +22,7 @@ import ReusableModal from '../../components/ReusableModal';
 import FilterContainer from '../../components/Home/FilterContainer';
 import SearchIconSvg from '../../assets/Home/SearchIcon.svg';
 import MelpikGuideBanner from '../../components/MelpikGuideBanner';
+import SkeletonItemList from '../../components/Home/SkeletonItemList';
 
 /**
  * Home(상품 리스트) 페이지 - 최적화 버전
@@ -341,15 +341,17 @@ const Home: React.FC = () => {
       {/* 제품 리스트 or 로딩 스피너 */}
       <ContentWrapper>
         {isLoading ? (
-          <Spinner />
+          <SkeletonItemList columns={viewCols} count={products.length || 8} />
         ) : uiItems.length === 0 && searchQuery ? (
-          <NoResultText>
-            검색 결과가 없습니다
-            <br />
-            <CountdownText>
-              {noResultCountdown}초 후 전체 카테고리로 돌아갑니다
-            </CountdownText>
-          </NoResultText>
+          <OverlayWrapper>
+            <OverlayMessage>
+              검색 결과가 없습니다
+              <br />
+              <CountdownText>
+                {noResultCountdown}초 후 전체 카테고리로 돌아갑니다
+              </CountdownText>
+            </OverlayMessage>
+          </OverlayWrapper>
         ) : (
           <ItemList
             items={uiItems}
@@ -659,18 +661,29 @@ const HistoryItem = styled.li`
 // 최근 검색어 최대 개수
 const MAX_HISTORY = 8;
 
-// 검색 결과 없음 텍스트
-const NoResultText = styled.div`
+// 오버레이 스타일 추가
+const OverlayWrapper = styled.div`
+  position: relative;
   width: 100%;
+  min-height: 400px;
+`;
+const OverlayMessage = styled.div`
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: rgba(255, 255, 255, 0.85);
+  padding: 40px 32px;
+  border-radius: 18px;
+
+  font-size: 2rem;
+  font-weight: 800;
+  color: #222;
   text-align: center;
-  color: #888;
-  font-size: 18px;
-  font-weight: 500;
-  padding: 60px 0 80px 0;
-  letter-spacing: -0.5px;
+  z-index: 2;
 `;
 
-// 카운트다운 텍스트
+// 검색 결과 없음 텍스트
 const CountdownText = styled.div`
   margin-top: 18px;
   font-size: 15px;
