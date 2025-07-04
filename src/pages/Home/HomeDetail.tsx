@@ -2,7 +2,7 @@
 import React, { useState, useMemo, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
-import Spinner from '../../components/Spinner';
+import { keyframes } from 'styled-components';
 import {
   useProductInfo,
   ProductDetail as APIProductDetail,
@@ -141,7 +141,7 @@ const HomeDetail: React.FC<HomeDetailProps> = ({ id: propId }) => {
     setSelectedService(service as 'rental' | 'purchase');
   };
 
-  if (isLoading) return <Spinner />;
+  if (isLoading) return <HomeDetailSkeleton />;
   if (isError || !product) return <div>제품을 찾을 수 없습니다.</div>;
 
   const productInfoItem = {
@@ -384,4 +384,198 @@ const ErrorMsg = styled.div`
   font-size: 14px;
   font-weight: 700;
   text-align: center;
+`;
+
+// 상세페이지용 스켈레톤 UI
+const HomeDetailSkeleton: React.FC = () => (
+  <DetailContainer>
+    {/* 이미지 슬라이더 영역 */}
+    <ImageSliderSkeleton>
+      <SkeletonImage />
+    </ImageSliderSkeleton>
+    <ContentContainer>
+      {/* 상품 정보 */}
+      <SkeletonText width='40%' height='22px' style={{ marginBottom: 12 }} />
+      <SkeletonText width='60%' height='16px' style={{ marginBottom: 18 }} />
+      <SkeletonText width='30%' height='18px' style={{ marginBottom: 24 }} />
+
+      {/* 옵션 선택 영역 */}
+      <SkeletonText width='80%' height='18px' style={{ marginBottom: 16 }} />
+      <SkeletonText width='60%' height='18px' style={{ marginBottom: 16 }} />
+      <SkeletonText width='50%' height='18px' style={{ marginBottom: 24 }} />
+
+      {/* 서비스 선택/버튼 영역 */}
+      <SkeletonButton width='100%' height='48px' style={{ marginBottom: 18 }} />
+      <SkeletonButton width='100%' height='48px' />
+
+      {/* 구분선 */}
+      <SkeletonDivider />
+
+      {/* 사이즈/소재/상세정보 등 */}
+      <SkeletonText width='30%' height='16px' style={{ marginBottom: 10 }} />
+      <SkeletonText width='90%' height='12px' style={{ marginBottom: 8 }} />
+      <SkeletonText width='80%' height='12px' style={{ marginBottom: 8 }} />
+      <SkeletonText width='70%' height='12px' style={{ marginBottom: 8 }} />
+      <SkeletonText width='60%' height='12px' style={{ marginBottom: 8 }} />
+      <SkeletonText width='50%' height='12px' style={{ marginBottom: 8 }} />
+    </ContentContainer>
+    {/* 하단 바(버튼) */}
+    <BottomBarSkeleton>
+      <SkeletonButton width='48%' height='44px' style={{ marginRight: '4%' }} />
+      <SkeletonButton width='48%' height='44px' />
+    </BottomBarSkeleton>
+  </DetailContainer>
+);
+
+// 스켈레톤 스타일
+const shimmer = keyframes`
+  0% { background-position: 0px 0; }
+  100% { background-position: calc(200px + 100%) 0; }
+`;
+const SkeletonImage = styled.div`
+  width: 100%;
+  height: 360px;
+  background: #eee;
+  background-image: linear-gradient(90deg, #eee 0px, #f5f5f5 40px, #eee 80px);
+  background-size: 200px 100%;
+  background-repeat: no-repeat;
+  border-radius: 8px;
+  animation: ${shimmer} 1.2s infinite linear;
+`;
+const SkeletonText = styled.div<{ width: string; height: string }>`
+  width: ${({ width }) => width};
+  height: ${({ height }) => height};
+  background: #eee;
+  background-image: linear-gradient(90deg, #eee 0px, #f5f5f5 40px, #eee 80px);
+  background-size: 200px 100%;
+  background-repeat: no-repeat;
+  border-radius: 4px;
+  animation: ${shimmer} 1.2s infinite linear;
+  margin-bottom: 6px;
+`;
+const SkeletonButton = styled.div<{ width: string; height: string }>`
+  width: ${({ width }) => width};
+  height: ${({ height }) => height};
+  background: #f6ae24;
+  opacity: 0.2;
+  border-radius: 8px;
+  margin-bottom: 6px;
+`;
+const SkeletonDivider = styled.div`
+  width: 100%;
+  height: 1px;
+  background: #eee;
+  margin: 30px 0;
+`;
+const ImageSliderSkeleton = styled.div`
+  width: 100%;
+  max-width: 600px;
+  margin: 0 auto;
+`;
+const BottomBarSkeleton = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  max-width: 600px;
+  margin: 0 auto 20px;
+  padding: 0 1rem;
+`;
+
+// SubHeader 스켈레톤
+export const SubHeaderSkeleton: React.FC = () => (
+  <SubHeaderWrapper>
+    <ContentWrapper>
+      {/* 좌측 화살표 (데스크탑) */}
+      <ArrowButtonSkeleton />
+      {/* 카테고리 아이콘들 */}
+      <IconsWrapper>
+        {Array.from({ length: 8 }).map((_, i) => (
+          <IconContainer key={i} selected={false}>
+            <SkeletonCircle />
+            <SkeletonText width='60%' height='12px' />
+          </IconContainer>
+        ))}
+        <IndicatorSkeleton />
+      </IconsWrapper>
+      {/* 우측 화살표 (데스크탑) */}
+      <ArrowButtonSkeleton />
+    </ContentWrapper>
+    <SubHeaderSkeletonDivider />
+  </SubHeaderWrapper>
+);
+
+const SkeletonCircle = styled.div`
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: #eee;
+  background-image: linear-gradient(90deg, #eee 0px, #f5f5f5 20px, #eee 40px);
+  background-size: 80px 100%;
+  background-repeat: no-repeat;
+  animation: ${shimmer} 1.2s infinite linear;
+  margin-bottom: 6px;
+`;
+const ArrowButtonSkeleton = styled.div`
+  display: none;
+  @media (min-width: 1024px) {
+    display: flex;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: #eee;
+    background-image: linear-gradient(90deg, #eee 0px, #f5f5f5 10px, #eee 20px);
+    background-size: 40px 100%;
+    background-repeat: no-repeat;
+    animation: ${shimmer} 1.2s infinite linear;
+    margin: 0 8px;
+  }
+`;
+const IndicatorSkeleton = styled.div`
+  position: absolute;
+  left: 20px;
+  bottom: 0;
+  width: 50px;
+  height: 4px;
+  border-radius: 2px;
+  background: #f6ae24;
+  opacity: 0.2;
+`;
+
+// SubHeaderSkeleton에서 사용하는 스타일 컴포넌트 복사
+const SubHeaderWrapper = styled.div`
+  position: relative;
+  width: 100%;
+  background: #fff;
+`;
+const ContentWrapper = styled.div`
+  display: flex;
+  align-items: center;
+  width: 100%;
+  max-width: 1000px;
+  margin: 0 auto;
+`;
+const IconsWrapper = styled.div`
+  position: relative;
+  display: flex;
+  overflow-x: auto;
+  scroll-behavior: smooth;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+`;
+const IconContainer = styled.div<{ selected: boolean }>`
+  flex: 0 0 auto;
+  width: 80px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  cursor: pointer;
+  padding: 10px 0;
+  opacity: ${({ selected }) => (selected ? 1 : 0.6)};
+`;
+const SubHeaderSkeletonDivider = styled.div`
+  width: 100%;
+  border-bottom: 1px solid #eeeeee;
+  margin-top: 4px;
 `;
