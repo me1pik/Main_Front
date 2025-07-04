@@ -2,10 +2,8 @@
 
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
-import styled, { keyframes } from 'styled-components';
-import { FaTh } from 'react-icons/fa';
+import styled from 'styled-components';
 
-import UnifiedHeader from '../../components/UnifiedHeader';
 import StatsSection from '../../components/Brand/StatsSection';
 import SubHeader from '../../components/Home/SubHeader';
 import ItemList, { UIItem } from '../../components/Home/ItemList';
@@ -20,11 +18,9 @@ import HomeDetail from '../Home/HomeDetail';
 import CancleIconIcon from '../../assets/Header/CancleIcon.svg';
 import ShareIcon from '../../assets/Header/ShareIcon.svg';
 import HomeIcon from '../../assets/Header/HomeIcon.svg';
-
-const fadeInDown = keyframes`
-  from { opacity: 0; transform: translateY(-10px); }
-  to { opacity: 1; transform: translateY(0); }
-`;
+import ReusableModal from '../../components/ReusableModal';
+import SearchIconSvg from '../../assets/Home/SearchIcon.svg';
+import ArrowIconSvg from '../../assets/ArrowIcon.svg';
 
 interface LocalBrand {
   id: number;
@@ -46,8 +42,6 @@ const BrandDetail: React.FC = () => {
 
   // 브랜드 정보 상태
   const [brand, setBrand] = useState<LocalBrand | null>(null);
-  const [loadingBrand, setLoadingBrand] = useState<boolean>(true);
-  const [errorBrand, setErrorBrand] = useState<string>('');
 
   // 제품 목록 상태
   const [allProducts, setAllProducts] = useState<ApiProduct[]>([]);
@@ -61,7 +55,6 @@ const BrandDetail: React.FC = () => {
 
   // 열 선택 관련 상태
   const [viewCols, setViewCols] = useState<number>(4);
-  const [menuOpen, setMenuOpen] = useState<boolean>(false);
 
   // 모바일 뷰 여부
   const [isMobileView, setIsMobileView] = useState(window.innerWidth < 768);
@@ -101,11 +94,10 @@ const BrandDetail: React.FC = () => {
   // 브랜드 정보 로드
   useEffect(() => {
     if (isNaN(idNum)) {
-      setErrorBrand('유효하지 않은 브랜드 ID입니다.');
-      setLoadingBrand(false);
       return;
     }
-    setLoadingBrand(true);
+    setLoadingProducts(true);
+    setErrorProducts('');
     (async () => {
       try {
         const data: ApiBrand[] = await getBrandList();
@@ -120,13 +112,13 @@ const BrandDetail: React.FC = () => {
             productCount: found.productCount || 0,
           });
         } else {
-          setErrorBrand('해당 브랜드를 찾을 수 없습니다.');
+          setErrorProducts('해당 브랜드를 찾을 수 없습니다.');
         }
       } catch (err) {
         console.error('브랜드 정보 조회 실패:', err);
-        setErrorBrand('브랜드 정보를 불러오는 중 오류가 발생했습니다.');
+        setErrorProducts('브랜드 정보를 불러오는 중 오류가 발생했습니다.');
       } finally {
-        setLoadingBrand(false);
+        setLoadingProducts(false);
       }
     })();
   }, [idNum]);
@@ -211,107 +203,175 @@ const BrandDetail: React.FC = () => {
     }
   };
 
-  // 로딩/오류 처리
-  if (loadingBrand) {
-    return (
-      <Container>
-        <StatText>브랜드 정보를 불러오는 중...</StatText>
-      </Container>
-    );
-  }
-  if (errorBrand) {
-    return (
-      <Container>
-        <Title>브랜드를 찾을 수 없습니다.</Title>
-        <Subtitle>{errorBrand}</Subtitle>
-      </Container>
-    );
-  }
-  if (!brand) {
-    return null;
-  }
+  // 검색 모달 상태 및 입력값, 히스토리
+  const [isSearchModalOpen, setSearchModalOpen] = useState(false);
+  const [searchInput, setSearchInput] = useState(searchTerm);
+  const [searchHistory, setSearchHistory] = useState<string[]>(() => {
+    const saved = localStorage.getItem('brandSearchHistory');
+    return saved ? JSON.parse(saved) : [];
+  });
+  // 최근 검색어 최대 개수
+  const MAX_HISTORY = 8;
+  // 검색 히스토리 저장 함수
+  const addToHistory = (keyword: string) => {
+    if (!keyword.trim()) return;
+    setSearchHistory((prev) => {
+      const filtered = prev.filter((item) => item !== keyword);
+      const newHistory = [keyword, ...filtered].slice(0, MAX_HISTORY);
+      localStorage.setItem('brandSearchHistory', JSON.stringify(newHistory));
+      return newHistory;
+    });
+  };
+
+  // 검색 결과 없음 카운트다운
+  const [noResultCountdown, setNoResultCountdown] = useState(3);
+  const countdownRef = React.useRef<NodeJS.Timeout | null>(null);
+
+  useEffect(() => {
+    if (!loadingProducts && filteredProducts.length === 0 && searchTerm) {
+      setNoResultCountdown(3);
+      if (countdownRef.current) clearInterval(countdownRef.current);
+      countdownRef.current = setInterval(() => {
+        setNoResultCountdown((prev) => {
+          if (prev <= 1) {
+            clearInterval(countdownRef.current!);
+            setSearchParams({ category: 'All' }, { replace: true });
+            setSelectedCategory('All');
+            return 3;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+    }
+    return () => {
+      if (countdownRef.current) clearInterval(countdownRef.current);
+    };
+    // eslint-disable-next-line
+  }, [loadingProducts, filteredProducts.length, searchTerm]);
 
   // UIItem 매핑 (filteredProducts 기준)
   const uiItems: UIItem[] = filteredProducts.map((it) => ({
     id: it.id.toString(),
     image: it.image || '',
-    brand: brand.name,
+    brand: brand?.name || '',
     description: it.description || '',
     price: it.price || 0,
     discount: it.discount || 0,
     isLiked: false,
   }));
 
-  // 열 옵션
-  const colOptions = isMobileView ? [1, 2, 3] : [4, 5, 6];
-  const selectCols = (n: number) => {
-    setViewCols(n);
-    setMenuOpen(false);
-  };
-
   // UI 렌더링
   return (
-    <>
-      {/* UnifiedHeader: 검색어 입력 시 URL의 ?search=... 으로 반영 */}
-      <UnifiedHeader
-        variant='oneDepth'
-        title={brand.name}
-        onBack={() => navigate('/brand')}
-      />
-
+    <PageWrapper>
       <Container>
         <Header>
-          <Title>{brand.name}</Title>
+          <Title>{brand?.name}</Title>
           <Subtitle>새로운 시즌 제품들을 내 손안에!</Subtitle>
         </Header>
 
-        <StatsSection brandCount={1} productCount={brand.productCount} />
+        <StatsSection brandCount={1} productCount={brand?.productCount || 0} />
         <Divider />
 
         <SubHeader
           selectedCategory={selectedCategory}
           setSelectedCategory={(cat) => {
-            // 카테고리 변경 시 search 파라미터 초기화하거나 유지할지 결정. 여기서는 초기화하지 않고 유지.
             setSelectedCategory(cat);
             scrollToTop();
           }}
           onCategoryClick={scrollToTop}
         />
 
-        {/* 필터 및 열 선택 */}
+        {/* 필터 및 검색 아이콘 */}
         <ControlsContainer>
-          <DropdownToggle onClick={() => setMenuOpen((prev) => !prev)}>
-            <FaTh size={20} />
-          </DropdownToggle>
-          <FilterContainer />
-          {menuOpen && (
-            <DropdownMenu>
-              {colOptions.map((n) => (
-                <DropdownItem
-                  key={n}
-                  active={viewCols === n}
-                  onClick={() => selectCols(n)}
-                >
-                  <OptionNumber>{n}</OptionNumber>
-                  <OptionText>열로 보기</OptionText>
-                </DropdownItem>
-              ))}
-            </DropdownMenu>
-          )}
+          <RowAlignBox>
+            {/* 검색 아이콘 */}
+            <IconButton onClick={() => setSearchModalOpen(true)}>
+              <img src={SearchIconSvg} alt='검색' />
+            </IconButton>
+            {/* 필터 아이콘 */}
+            <FilterContainer />
+          </RowAlignBox>
+          {/* 검색 모달 */}
+          <ReusableModal
+            isOpen={isSearchModalOpen}
+            onClose={() => setSearchModalOpen(false)}
+            title='제품 검색'
+          >
+            <ModalSearchBar>
+              <ModalSearchInput
+                type='text'
+                placeholder='브랜드 또는 설명으로 검색...'
+                value={searchInput}
+                autoFocus
+                onChange={(e) => setSearchInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    setSearchParams(
+                      { category: 'All', search: searchInput },
+                      { replace: true }
+                    );
+                    setSelectedCategory('All');
+                    addToHistory(searchInput);
+                    setSearchModalOpen(false);
+                  }
+                }}
+              />
+              <ModalSearchIconButton
+                onClick={() => {
+                  setSearchParams(
+                    { category: 'All', search: searchInput },
+                    { replace: true }
+                  );
+                  setSelectedCategory('All');
+                  addToHistory(searchInput);
+                  setSearchModalOpen(false);
+                }}
+                aria-label='검색'
+              >
+                <img src={SearchIconSvg} alt='검색' />
+              </ModalSearchIconButton>
+            </ModalSearchBar>
+            {/* 최근 검색어 히스토리 */}
+            {searchHistory.length > 0 && (
+              <HistoryContainer>
+                <HistoryTitle>최근 검색어</HistoryTitle>
+                <HistoryList>
+                  {searchHistory.map((item, idx) => (
+                    <HistoryItem
+                      key={item + idx}
+                      onClick={() => {
+                        setSearchInput(item);
+                        setSearchParams(
+                          { category: 'All', search: item },
+                          { replace: true }
+                        );
+                        setSelectedCategory('All');
+                        addToHistory(item);
+                        setSearchModalOpen(false);
+                      }}
+                    >
+                      {item}
+                    </HistoryItem>
+                  ))}
+                </HistoryList>
+              </HistoryContainer>
+            )}
+          </ReusableModal>
         </ControlsContainer>
 
-        <Content>
+        <MainContent>
           {loadingProducts ? (
             <StatText>제품 목록을 불러오는 중...</StatText>
           ) : errorProducts ? (
             <StatText>{errorProducts}</StatText>
-          ) : filteredProducts.length === 0 ? (
-            // 검색어나 카테고리 필터 결과가 없을 때 메시지
-            searchTerm ? (
-              <StatText>"{searchTerm}"에 대한 결과가 없습니다.</StatText>
-            ) : (
-              <StatText>조건에 맞는 제품이 없습니다.</StatText>
-            )
+          ) : uiItems.length === 0 && searchTerm ? (
+            <NoResultTextBrand>
+              검색 결과가 없습니다
+              <br />
+              <CountdownTextBrand>
+                {noResultCountdown}초 후 전체 카테고리로 돌아갑니다
+              </CountdownTextBrand>
+            </NoResultTextBrand>
           ) : (
             <ItemList
               items={uiItems}
@@ -319,12 +379,11 @@ const BrandDetail: React.FC = () => {
               onItemClick={handleItemClick}
             />
           )}
-        </Content>
+        </MainContent>
 
+        {/* 하단 스크롤 탑 버튼(유지) */}
         <ScrollToTopButton onClick={scrollToTop}>
-          <ArrowIcon viewBox='0 0 24 24'>
-            <path d='M12 4l-8 8h6v8h4v-8h6z' />
-          </ArrowIcon>
+          <ArrowIconImg src={ArrowIconSvg} alt='위로 이동' />
         </ScrollToTopButton>
       </Container>
 
@@ -358,7 +417,7 @@ const BrandDetail: React.FC = () => {
           </ModalBox>
         </ModalOverlay>
       )}
-    </>
+    </PageWrapper>
   );
 };
 
@@ -372,6 +431,7 @@ const Container = styled.div`
   padding: 1rem;
   margin: auto;
   max-width: 1000px;
+  width: 100%;
   position: relative;
 `;
 
@@ -407,98 +467,31 @@ const ControlsContainer = styled.div`
   position: relative;
 `;
 
-const DropdownToggle = styled.button`
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 6px;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-  background-color: #f9f9f9;
-  cursor: pointer;
-  transition: background-color 0.3s ease;
-  &:hover {
-    background-color: #e6e6e6;
-  }
-`;
-
-const DropdownMenu = styled.ul`
-  position: absolute;
-  right: 0;
-  top: calc(100% + 4px);
-  background: #fff;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  list-style: none;
-  padding: 8px 0;
-  margin: 0;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  min-width: 120px;
-  animation: ${fadeInDown} 0.25s ease-out;
-  z-index: 10;
-`;
-
-const DropdownItem = styled.li<{ active: boolean }>`
-  display: flex;
-  align-items: center;
-  padding: 8px 12px;
-  font-size: 14px;
-  cursor: pointer;
-  color: ${({ active }) => (active ? '#ff9d00' : '#333')};
-  background: ${({ active }) => (active ? '#fff7e6' : 'transparent')};
-  &:hover {
-    background: #f5f5f5;
-  }
-`;
-
-const OptionNumber = styled.span`
-  padding: 0 4px;
-  font-weight: 700;
-`;
-
-const OptionText = styled.span`
-  margin-left: 4px;
-`;
-
-const Content = styled.div`
-  flex: 1;
-`;
-
 const ScrollToTopButton = styled.button`
   position: fixed;
-  bottom: 120px;
+  bottom: 100px;
   right: 20px;
-  width: 60px;
-  height: 60px;
+  width: 50px;
+  height: 50px;
   border: none;
-  border-radius: 50%;
-  background: linear-gradient(
-    135deg,
-    rgba(255, 204, 0, 0.9),
-    rgba(255, 153, 0, 0.9)
-  );
-  color: #fff;
   cursor: pointer;
   z-index: 1000;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  background: #f6ae24;
+  border-radius: 6px;
   transition:
     transform 0.3s,
     box-shadow 0.3s,
     opacity 0.3s;
   &:hover {
     transform: scale(1.1);
-    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);
-    opacity: 1;
+  }
+  @media (min-width: 1000px) {
+    right: calc((100vw - 1000px) / 2 + 20px);
   }
 `;
 
-const ArrowIcon = styled.svg`
-  width: 28px;
-  height: 28px;
-  fill: #fff;
-`;
+const ArrowIconImg = styled.img``;
 
 const StatText = styled.div`
   font-size: 14px;
@@ -566,4 +559,137 @@ const CancleIcon = styled.img`
 `;
 const Icon = styled.img`
   cursor: pointer;
+`;
+
+// styled-components: Home.tsx에서 검색 관련 컴포넌트 복사
+const RowAlignBox = styled.div`
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 10px;
+  margin-top: 20px;
+`;
+const IconButton = styled.div`
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  img {
+    width: 16px;
+    height: 16px;
+    padding: 10px;
+    border-radius: 4px;
+    border: 1px solid #ccc;
+    background-color: #f9f9f9;
+    transition: background-color 0.3s ease;
+  }
+  &:hover img {
+    background-color: #e6e6e6;
+  }
+`;
+const ModalSearchBar = styled.div`
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  gap: 0;
+  margin-top: 18px;
+`;
+const ModalSearchInput = styled.input`
+  border: 1.5px solid #ccc;
+  border-radius: 6px 0 0 6px;
+  font-size: 17px;
+  padding: 12px 16px;
+  width: 260px;
+  outline: none;
+  box-sizing: border-box;
+  background: #fafafa;
+`;
+const ModalSearchIconButton = styled.button`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 48px;
+  width: 48px;
+  border: 1.5px solid #ccc;
+  border-left: none;
+  border-radius: 0 6px 6px 0;
+  cursor: pointer;
+  transition: background 0.2s;
+  padding: 0;
+  &:hover {
+    background: #ffbe4b;
+  }
+  img {
+    width: 20px;
+    height: 20px;
+    filter: brightness(0.7);
+  }
+`;
+const HistoryContainer = styled.div`
+  margin-top: 24px;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+`;
+const HistoryTitle = styled.div`
+  font-size: 14px;
+  color: #888;
+  margin-bottom: 8px;
+  font-weight: 600;
+`;
+const HistoryList = styled.ul`
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 0;
+  margin: 0;
+`;
+const HistoryItem = styled.li`
+  list-style: none;
+  background: #f5f5f5;
+  color: #333;
+  border-radius: 16px;
+  padding: 6px 16px;
+  font-size: 15px;
+  cursor: pointer;
+  border: 1px solid #e0e0e0;
+  transition:
+    background 0.2s,
+    color 0.2s;
+  &:hover {
+    background: #ffe6b8;
+    color: #f6ae24;
+  }
+`;
+
+// styled-components: Home.tsx에서 ContentWrapper, NoResultText, CountdownText 복사 (파일 하단에 위치)
+const PageWrapper = styled.div`
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  margin: auto;
+  max-width: 1000px;
+  padding: 1rem;
+`;
+const MainContent = styled.div`
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+`;
+const NoResultTextBrand = styled.div`
+  width: 100%;
+  text-align: center;
+  color: #888;
+  font-size: 18px;
+  font-weight: 500;
+  padding: 60px 0 80px 0;
+  letter-spacing: -0.5px;
+`;
+const CountdownTextBrand = styled.div`
+  margin-top: 18px;
+  font-size: 15px;
+  color: #f6ae24;
+  font-weight: 600;
 `;
