@@ -45,7 +45,7 @@ const UpdateProfile: React.FC = () => {
   const {
     register,
     handleSubmit,
-    formState: { isSubmitting },
+    formState: { isSubmitting, errors },
     watch,
     reset,
     setValue,
@@ -53,6 +53,51 @@ const UpdateProfile: React.FC = () => {
 
   // react-query로 내 정보 패칭
   const { data: myInfo, isLoading } = useMyInfo();
+
+  // 1. region, district 분리
+  const [regionPart, setRegionPart] = useState('');
+  const [districtPart, setDistrictPart] = useState('');
+
+  // 2. myInfo가 바뀔 때 region, district 분리해서 state에 저장
+  useEffect(() => {
+    if (!myInfo) return;
+    const normalized = myInfo.address.replace(/\u00A0/g, ' ').trim();
+    const regionKeys = Object.keys(regionDistrictData);
+    const foundRegion = regionKeys.find((region) =>
+      normalized.startsWith(region)
+    );
+    let region = '';
+    let district = '';
+    if (foundRegion) {
+      region = foundRegion;
+      district = normalized.slice(foundRegion.length).trim();
+    }
+    setRegionPart(region);
+    setDistrictPart(district);
+    // 나머지 값은 바로 reset
+    const [idPart, domainPart] = myInfo.email.split('@');
+    const rawPhone = myInfo.phoneNumber.replace(/-/g, '');
+    const birthYearStr = String(myInfo.birthYear);
+    const genderKor = myInfo.gender === 'female' ? '여성' : '남성';
+    reset({
+      emailId: idPart,
+      emailDomain: domainPart,
+      nickname: myInfo.nickname,
+      name: myInfo.name,
+      birthYear: birthYearStr,
+      phoneNumber: rawPhone,
+      region: region, // region만 먼저 세팅
+      district: '', // district는 일단 비워둠
+      gender: genderKor,
+    });
+  }, [myInfo, reset]);
+
+  // 3. regionPart가 바뀌면 district를 setValue로 세팅
+  useEffect(() => {
+    if (regionPart && districtPart) {
+      setValue('district', districtPart);
+    }
+  }, [regionPart, districtPart, setValue]);
 
   // 모바일 키보드 열림 감지 (원래 로직 그대로 유지)
   const initialHeight = window.visualViewport
@@ -75,50 +120,6 @@ const UpdateProfile: React.FC = () => {
       }
     };
   }, [initialHeight]);
-
-  // 백엔드에서 /user/my-info 가져와서 폼 초기화
-  useEffect(() => {
-    if (!myInfo) return;
-
-    try {
-      // address 문자열에 \u00A0 (non-breaking space) 등이 있을 수 있으므로 일반 공백으로 교체 후 trim
-      const normalized = myInfo.address.replace(/\u00A0/g, ' ').trim();
-      // 여러 공백/탭 등이 섞여 있을 경우에도 잘 분리되도록 \s+로 split
-      const parts = normalized.split(/\s+/);
-      const regionPart = parts[0] || '';
-      const districtPart = parts.slice(1).join(' ');
-
-      // 이하 기존 로직...
-      const [idPart, domainPart] = myInfo.email.split('@');
-      const rawPhone = myInfo.phoneNumber.replace(/-/g, '');
-      const birthYearStr = String(myInfo.birthYear);
-      const genderKor = myInfo.gender === 'female' ? '여성' : '남성';
-
-      reset({
-        emailId: idPart,
-        emailDomain: domainPart,
-        nickname: myInfo.nickname,
-        name: myInfo.name,
-        birthYear: birthYearStr,
-        phoneNumber: rawPhone,
-        region: regionPart,
-        district: districtPart,
-        gender: genderKor,
-      });
-    } catch (err) {
-      console.error('내 정보 조회 오류:', err);
-    }
-  }, [myInfo, reset]);
-
-  // region이 바뀌면 district를 초기화
-  useEffect(() => {
-    const subscription = watch(({ name }) => {
-      if (name === 'region') {
-        setValue('district', '');
-      }
-    });
-    return () => subscription.unsubscribe();
-  }, [watch, setValue]);
 
   // 제출 핸들러: 닉네임과 주소만 PATCH 요청
   const [signupResult, setSignupResult] = useState<React.ReactNode>('');
@@ -248,7 +249,7 @@ const UpdateProfile: React.FC = () => {
                 label='시/도'
                 id='region'
                 as={CustomSelect}
-                {...register('region')}
+                {...register('region', { required: '시/도를 선택하세요' })}
               >
                 <option value=''>시/도를 선택하세요</option>
                 {Object.keys(regionDistrictData).map((region) => (
@@ -262,7 +263,8 @@ const UpdateProfile: React.FC = () => {
                 label='구/군'
                 id='district'
                 as={CustomSelect}
-                {...register('district')}
+                {...register('district', { required: '구/군을 선택하세요' })}
+                disabled={!watch('region')}
               >
                 <option value=''>구/군을 선택하세요</option>
                 {watch('region') &&
@@ -275,6 +277,17 @@ const UpdateProfile: React.FC = () => {
                   ))}
               </InputField>
             </RowLabel>
+
+            {errors.region && (
+              <span style={{ color: 'red', fontSize: '0.9em' }}>
+                {errors.region.message}
+              </span>
+            )}
+            {errors.district && (
+              <span style={{ color: 'red', fontSize: '0.9em' }}>
+                {errors.district.message}
+              </span>
+            )}
           </Form>
 
           <FixedBottomBar
