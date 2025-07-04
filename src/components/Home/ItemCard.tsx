@@ -326,7 +326,7 @@ const DiscountLabel = styled.span`
 // Skeleton UI 스타일 추가
 const skeletonShimmer = keyframes`
   0% {
-    background-position: -200px 0;
+    background-position: 0px 0;
   }
   100% {
     background-position: calc(200px + 100%) 0;
