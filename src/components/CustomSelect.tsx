@@ -13,11 +13,7 @@ export const CustomSelect = styled.select`
   line-height: 14px;
   color: #000000;
   appearance: none;
-  background: ${({ disabled }) =>
-    disabled
-      ? '#f0f0f0'
-      : `url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20width%3D'10'%20height%3D'6'%20viewBox%3D'0%200%2010%206'%20xmlns%3D'http%3A//www.w3.org/2000/svg'%3E%3Cpath%20d%3D'M0%200l5%206l5-6z'%20fill%3D'%23000'%20/%3E%3C/svg%3E")
-        no-repeat right 16px center/10px 6px`};
+  background: url('/SelectIcon.svg') no-repeat right 16px center/15px 16px;
   &:focus {
     outline: none;
     border-color: #000000;

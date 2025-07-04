@@ -1,6 +1,7 @@
 import React from 'react';
 import styled from 'styled-components';
-import Theme from '../../../styles/Theme';
+
+import { CustomSelect } from '../../CustomSelect';
 
 export interface ServiceSelectionProps {
   selectedService: string;
@@ -14,7 +15,7 @@ const ServiceSelection: React.FC<ServiceSelectionProps> = ({
   return (
     <ServiceContainer>
       <label>서비스 방식 (선택)</label>
-      <Select
+      <CustomSelect
         value={selectedService}
         onChange={(e) => setSelectedService(e.target.value)}
       >
@@ -23,7 +24,7 @@ const ServiceSelection: React.FC<ServiceSelectionProps> = ({
         <option value='purchase' disabled>
           구매 (준비중)
         </option>
-      </Select>
+      </CustomSelect>
     </ServiceContainer>
   );
 };
@@ -40,27 +41,5 @@ const ServiceContainer = styled.div`
     font-size: 12px;
     margin-bottom: 10px;
     display: block;
-  }
-`;
-
-const Select = styled.select`
-  width: 100%;
-  height: 57px;
-  padding: 8px;
-  box-sizing: border-box;
-  border: 1px solid ${Theme.colors.black};
-  border-radius: 4px;
-  background-color: ${Theme.colors.white};
-  font-size: 16px;
-  color: ${Theme.colors.black};
-
-  &:focus {
-    outline: none;
-    border-color: ${Theme.colors.black};
-  }
-
-  // disabled 상태 스타일링 (선택사항)
-  option:disabled {
-    color: ${Theme.colors.gray};
   }
 `;

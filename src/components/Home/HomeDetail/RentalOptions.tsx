@@ -11,6 +11,7 @@ import ReusableModal from '../../../components/ReusableModal';
 import RentalSelectDateIcon from '../../../assets/Home/HomeDetail/RentalSelectDateIcon.svg';
 import { getUnavailableDates } from '../../../api/scedule/scedule';
 import 'react-datepicker/dist/react-datepicker.css';
+import { CustomSelect } from '../../CustomSelect';
 
 interface SquareIconProps {
   disabled?: boolean;
@@ -236,7 +237,7 @@ const RentalOptions: React.FC<RentalOptionsProps> = ({
       <Container>
         <Label>대여옵션 (선택)</Label>
         <Wrapper>
-          <Select
+          <CustomSelect
             value={selectedPeriod}
             onChange={(e) => {
               setSelectedPeriod(e.target.value);
@@ -246,7 +247,7 @@ const RentalOptions: React.FC<RentalOptionsProps> = ({
             <option value=''>대여기간 선택</option>
             <option value='3박4일'>3박4일</option>
             <option value='5박6일'>5박6일</option>
-          </Select>
+          </CustomSelect>
           <Button
             disabled={!selectedPeriod}
             onClick={() => setIsModalOpen(true)}
@@ -416,13 +417,6 @@ const Label = styled.label`
 const Wrapper = styled.div`
   display: flex;
   gap: 10px;
-`;
-const Select = styled.select`
-  flex: 1;
-  padding: 20px 10px;
-  border: 1px solid #000;
-  border-radius: 5px;
-  font-size: 16px;
 `;
 const Button = styled.button<{ disabled?: boolean }>`
   flex: 1;

@@ -144,4 +144,26 @@ export const GlobalStyle = createGlobalStyle`
       font-size: 18px;
     }
   }
+
+  /* 모든 select 요소에 공통 옵션 아이콘 적용 */
+  select {
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    background: url('/SelectIcon.svg') no-repeat right 10px center/15px 16px;
+    padding-right: 32px; /* 아이콘 공간 확보 */
+    background-color: #fff;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    height: 40px;
+    min-width: 80px;
+    font-size: 1rem;
+    color: #333;
+    cursor: pointer;
+  }
+
+  select:focus {
+    border-color: #f6ae24;
+    outline: none;
+  }
 `;
