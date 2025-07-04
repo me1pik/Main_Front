@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import styled from 'styled-components';
 import ReusableModal from './ReusableModal';
+import HomeserviceIcon from '../assets/Home/HomeserviceIcon.svg';
 
 const BannerWrapper = styled.div`
   width: 100%;
@@ -84,7 +85,7 @@ const MelpikGuideBanner = () => {
       <BannerWrapper onClick={() => setOpen(true)}>
         <IconBox>
           <img
-            src='/src/assets/Home/HomeserviceIcon.svg'
+            src={HomeserviceIcon}
             alt='멜픽 서비스 아이콘'
             width={66}
             height={50}
