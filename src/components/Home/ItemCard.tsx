@@ -1,6 +1,6 @@
 // src/components/ItemCard.tsx
 import React, { useState } from 'react';
-import styled from 'styled-components';
+import styled, { keyframes } from 'styled-components';
 import PickIconOn from '../../assets/Home/PickIconOn.svg';
 import PickIconOff from '../../assets/Home/PickIconOff.svg';
 import { addToCloset, removeFromCloset } from '../../api/closet/closetApi';
@@ -36,6 +36,7 @@ function ItemCard({
   const [errorModalOpen, setErrorModalOpen] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
   const [confirmAction, setConfirmAction] = useState<ConfirmAction>(null);
+  const [imgLoaded, setImgLoaded] = useState(false);
 
   const displayDescription = description.includes('/')
     ? description.split('/')[1]
@@ -102,7 +103,13 @@ function ItemCard({
     <>
       <Card onClick={handleCardClick}>
         <ImageWrapper>
-          <Image src={image.split('#')[0] || '/default.jpg'} alt={brand} />
+          {!imgLoaded && <SkeletonImage data-testid='skeleton-image' />}
+          <Image
+            src={image.split('#')[0] || '/default.jpg'}
+            alt={brand}
+            style={{ display: imgLoaded ? 'block' : 'none' }}
+            onLoad={() => setImgLoaded(true)}
+          />
           <HookButton
             isLiked={liked}
             animating={animating}
@@ -115,16 +122,38 @@ function ItemCard({
             />
           </HookButton>
         </ImageWrapper>
-        <Brand>{brand}</Brand>
-        <Description>{displayDescription}</Description>
-        <PriceWrapper>
-          <PointBar />
-          <OriginalPrice>{price.toLocaleString()}원</OriginalPrice>
-          <SubPrice>
-            <NowLabel>NOW</NowLabel>
-            <DiscountLabel>{discount}%</DiscountLabel>
-          </SubPrice>
-        </PriceWrapper>
+        {!imgLoaded ? (
+          <>
+            <SkeletonText
+              width='60%'
+              height='14px'
+              style={{ margin: '10px 0 0 0' }}
+            />
+            <SkeletonText
+              width='80%'
+              height='11px'
+              style={{ margin: '5px 0 0 0', marginBottom: '4px' }}
+            />
+            <SkeletonText
+              width='40%'
+              height='14px'
+              style={{ marginTop: '5px' }}
+            />
+          </>
+        ) : (
+          <>
+            <Brand>{brand}</Brand>
+            <Description>{displayDescription}</Description>
+            <PriceWrapper>
+              <PointBar />
+              <OriginalPrice>{price.toLocaleString()}원</OriginalPrice>
+              <SubPrice>
+                <NowLabel>NOW</NowLabel>
+                <DiscountLabel>{discount}%</DiscountLabel>
+              </SubPrice>
+            </PriceWrapper>
+          </>
+        )}
       </Card>
 
       <ReusableModal
@@ -292,4 +321,38 @@ const DiscountLabel = styled.span`
   font-weight: 800;
   font-size: 11px;
   color: #f6ae24;
+`;
+
+// Skeleton UI 스타일 추가
+const skeletonShimmer = keyframes`
+  0% {
+    background-position: -200px 0;
+  }
+  100% {
+    background-position: calc(200px + 100%) 0;
+  }
+`;
+const SkeletonImage = styled.div`
+  width: 100%;
+  height: 240px;
+  background: #eee;
+  background-image: linear-gradient(90deg, #eee 0px, #f5f5f5 40px, #eee 80px);
+  background-size: 200px 100%;
+  background-repeat: no-repeat;
+  border-radius: 8px;
+  animation: ${skeletonShimmer} 1.2s infinite linear;
+  position: absolute;
+  top: 0;
+  left: 0;
+`;
+const SkeletonText = styled.div<{ width: string; height: string }>`
+  width: ${({ width }) => width};
+  height: ${({ height }) => height};
+  background: #eee;
+  background-image: linear-gradient(90deg, #eee 0px, #f5f5f5 40px, #eee 80px);
+  background-size: 200px 100%;
+  background-repeat: no-repeat;
+  border-radius: 4px;
+  animation: ${skeletonShimmer} 1.2s infinite linear;
+  margin-bottom: 6px;
 `;

@@ -353,6 +353,7 @@ const Home: React.FC = () => {
             items={uiItems}
             columns={viewCols}
             onItemClick={handleOpenModal}
+            isLoading={isLoading}
           />
         )}
       </ContentWrapper>

@@ -17,13 +17,17 @@ type ItemListProps = {
   columns?: number;
   onItemClick?: (id: string) => void;
   onDelete?: (id: string) => void;
+  isLoading?: boolean;
 };
+
+const SKELETON_COUNT = 8;
 
 const ItemList: React.FC<ItemListProps> = ({
   items,
   columns = 5,
   onItemClick,
   onDelete,
+  isLoading = false,
 }) => {
   const handleOpen = onItemClick ?? (() => {});
   const handleDelete = onDelete ?? (() => {});
@@ -31,14 +35,28 @@ const ItemList: React.FC<ItemListProps> = ({
   return (
     <ListContainer>
       <ItemsWrapper columns={columns}>
-        {items.map((item) => (
-          <ItemCard
-            key={item.id}
-            {...item}
-            onOpenModal={handleOpen}
-            onDelete={handleDelete}
-          />
-        ))}
+        {isLoading
+          ? Array.from({ length: SKELETON_COUNT }).map((_, idx) => (
+              <ItemCard
+                key={`skeleton-${idx}`}
+                id={'' + idx}
+                image={''}
+                brand={''}
+                description={''}
+                price={0}
+                discount={0}
+                isLiked={false}
+                onOpenModal={() => {}}
+              />
+            ))
+          : items.map((item) => (
+              <ItemCard
+                key={item.id}
+                {...item}
+                onOpenModal={handleOpen}
+                onDelete={handleDelete}
+              />
+            ))}
       </ItemsWrapper>
     </ListContainer>
   );
