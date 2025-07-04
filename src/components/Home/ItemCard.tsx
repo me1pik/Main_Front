@@ -115,6 +115,7 @@ function ItemCard({
         <Brand>{brand}</Brand>
         <Description>{displayDescription}</Description>
         <PriceWrapper>
+          <PointBar />
           <OriginalPrice>{price.toLocaleString()}원</OriginalPrice>
           <SubPrice>
             <NowLabel>NOW</NowLabel>
@@ -216,8 +217,9 @@ const LikeButton = styled.div<{ $animating: boolean }>`
 
 const Brand = styled.h3`
   margin: 10px 0 0 0;
-  font-size: 10px;
   font-weight: 900;
+  font-size: 10px;
+  line-height: 11px;
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
@@ -238,12 +240,22 @@ const PriceWrapper = styled.div`
   align-items: center;
   gap: 4px;
   margin-top: 5px;
-  margin-left: 10px;
+
+  position: relative;
 
   @media (max-width: 768px) {
     margin-top: 5px;
     margin-left: 5px;
   }
+`;
+
+const PointBar = styled.div`
+  display: block;
+  width: 2px;
+  height: 16px;
+  background: #f6ae24;
+  border-radius: 2px;
+  margin-right: 5px;
 `;
 
 const OriginalPrice = styled.span`
