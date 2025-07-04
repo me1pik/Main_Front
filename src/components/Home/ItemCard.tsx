@@ -1,7 +1,8 @@
 // src/components/ItemCard.tsx
 import React, { useState } from 'react';
-import styled, { keyframes, css } from 'styled-components';
-import { HeartIcon } from '../../assets/library/HeartIcon';
+import styled from 'styled-components';
+import PickIconOn from '../../assets/Home/PickIconOn.svg';
+import PickIconOff from '../../assets/Home/PickIconOff.svg';
 import { addToCloset, removeFromCloset } from '../../api/closet/closetApi';
 import ReusableModal from '../ReusableModal2';
 
@@ -18,12 +19,6 @@ type ItemCardProps = {
 };
 
 type ConfirmAction = 'add' | 'remove' | null;
-
-const heartbeat = keyframes`
-  0% { transform: scale(1); }
-  30% { transform: scale(1.4); }
-  100% { transform: scale(1); }
-`;
 
 function ItemCard({
   id,
@@ -108,9 +103,17 @@ function ItemCard({
       <Card onClick={handleCardClick}>
         <ImageWrapper>
           <Image src={image.split('#')[0] || '/default.jpg'} alt={brand} />
-          <LikeButton $animating={animating} onClick={handleLikeClick}>
-            <HeartIcon filled={liked} />
-          </LikeButton>
+          <HookButton
+            isLiked={liked}
+            animating={animating}
+            onClick={handleLikeClick}
+          >
+            <img
+              src={liked ? PickIconOn : PickIconOff}
+              alt={liked ? '찜됨' : '찜하기'}
+              style={{ width: 20, height: 16 }}
+            />
+          </HookButton>
         </ImageWrapper>
         <Brand>{brand}</Brand>
         <Description>{displayDescription}</Description>
@@ -180,38 +183,50 @@ const Image = styled.img`
   background: #f5f5f5;
 `;
 
-const LikeButton = styled.div<{ $animating: boolean }>`
+const HookButton = styled.button<{ isLiked: boolean; animating: boolean }>`
   position: absolute;
-  bottom: 6px;
-  right: 6px;
-  width: 24px;
-  height: 24px;
-  padding: 2px;
-  background: rgba(255, 255, 255, 0.9);
-  border-radius: 50%;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+  bottom: 0px;
+  right: 0px;
+  width: 36px;
+  height: 36px;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  transition: transform 0.2s ease;
-
-  /* 클릭으로 $animating=true 일 때 한 번 뛰기 */
-  ${({ $animating }) =>
-    $animating &&
-    css`
-      animation: ${heartbeat} 0.3s ease-out;
-    `}
-
-  /* 호버 시에도 계속 뛰는 효과 */
-  &:hover {
-    animation: ${heartbeat} 0.6s ease-out infinite;
-    transform: scale(1.1);
-  }
-
-  & svg {
-    width: 16px;
+  border: 1.5px solid;
+  border-color: ${({ isLiked }) => (isLiked ? '#fff' : '#F6AE24')};
+  background: ${({ isLiked }) => (isLiked ? '#F6AE24' : '#fff')};
+  transition:
+    background 0.2s,
+    border-color 0.2s,
+    transform 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+    opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  padding: 0;
+  z-index: 2;
+  box-sizing: border-box;
+  overflow: hidden;
+  transform: ${({ animating }) => (animating ? 'scale(1.3)' : 'scale(1)')};
+  opacity: ${({ animating }) => (animating ? 0.7 : 1)};
+  img {
+    width: 20px;
     height: 16px;
+    display: block;
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    transform: ${({ animating }) => (animating ? 'scale(1.3)' : 'scale(1)')};
+  }
+  &::after {
+    content: '';
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    width: 0;
+    height: 0;
+    border-style: solid;
+    border-width: 0 0 12px 12px;
+    border-color: transparent transparent
+      ${({ isLiked }) => (isLiked ? '#fff' : '#F6AE24')} transparent;
+    background: none;
+    z-index: 3;
   }
 `;
 
