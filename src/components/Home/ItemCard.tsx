@@ -45,6 +45,7 @@ function ItemCard({
   const handleCardClick = () => onOpenModal(id);
   const handleLikeClick = (e: React.MouseEvent) => {
     e.stopPropagation();
+    if (animating) return;
     setConfirmAction(liked ? 'remove' : 'add');
   };
 
@@ -107,7 +108,10 @@ function ItemCard({
           <Image
             src={image.split('#')[0] || '/default.jpg'}
             alt={brand}
-            style={{ display: imgLoaded ? 'block' : 'none' }}
+            style={{
+              display: imgLoaded ? 'block' : 'none',
+              opacity: imgLoaded ? 1 : 0,
+            }}
             onLoad={() => setImgLoaded(true)}
           />
           <HookButton
@@ -208,8 +212,9 @@ const Image = styled.img`
   aspect-ratio: 2/3;
   object-fit: cover;
   display: block;
-
   background: #f5f5f5;
+  opacity: 0;
+  transition: opacity 0.5s cubic-bezier(0.4, 0, 0.2, 1);
 `;
 
 const HookButton = styled.button<{ $isLiked: boolean; $animating: boolean }>`
@@ -226,22 +231,24 @@ const HookButton = styled.button<{ $isLiked: boolean; $animating: boolean }>`
   border-color: ${({ $isLiked }) => ($isLiked ? '#fff' : '#F6AE24')};
   background: ${({ $isLiked }) => ($isLiked ? '#F6AE24' : '#fff')};
   transition:
-    background 0.2s,
-    border-color 0.2s,
-    transform 0.3s cubic-bezier(0.4, 0, 0.2, 1),
-    opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    background 0.2s cubic-bezier(0.4, 0, 0.2, 1),
+    border-color 0.2s cubic-bezier(0.4, 0, 0.2, 1),
+    transform 0.35s cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 0.35s cubic-bezier(0.22, 1, 0.36, 1);
   padding: 0;
   z-index: 2;
   box-sizing: border-box;
   overflow: hidden;
-  transform: ${({ $animating }) => ($animating ? 'scale(1.3)' : 'scale(1)')};
-  opacity: ${({ $animating }) => ($animating ? 0.7 : 1)};
+  transform: ${({ $animating }) => ($animating ? 'scale(1.18)' : 'scale(1)')};
+  opacity: ${({ $animating }) => ($animating ? 0.8 : 1)};
+  box-shadow: ${({ $animating }) =>
+    $animating ? '0 0 12px #f6ae2444' : 'none'};
   img {
     width: 20px;
     height: 16px;
     display: block;
-    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    transform: ${({ $animating }) => ($animating ? 'scale(1.3)' : 'scale(1)')};
+    transition: transform 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+    transform: ${({ $animating }) => ($animating ? 'scale(1.18)' : 'scale(1)')};
   }
   &::after {
     content: '';
