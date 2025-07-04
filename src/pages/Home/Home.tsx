@@ -443,7 +443,7 @@ const ContentWrapper = styled.div`
 
 const ScrollToTopButton = styled.button`
   position: fixed;
-  bottom: 150px;
+  bottom: 100px;
   right: 20px;
   width: 50px;
   height: 50px;
