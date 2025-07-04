@@ -111,8 +111,8 @@ function ItemCard({
             onLoad={() => setImgLoaded(true)}
           />
           <HookButton
-            isLiked={liked}
-            animating={animating}
+            $isLiked={liked}
+            $animating={animating}
             onClick={handleLikeClick}
           >
             <img
@@ -212,7 +212,7 @@ const Image = styled.img`
   background: #f5f5f5;
 `;
 
-const HookButton = styled.button<{ isLiked: boolean; animating: boolean }>`
+const HookButton = styled.button<{ $isLiked: boolean; $animating: boolean }>`
   position: absolute;
   bottom: 0px;
   right: 0px;
@@ -223,8 +223,8 @@ const HookButton = styled.button<{ isLiked: boolean; animating: boolean }>`
   justify-content: center;
   cursor: pointer;
   border: 1.5px solid;
-  border-color: ${({ isLiked }) => (isLiked ? '#fff' : '#F6AE24')};
-  background: ${({ isLiked }) => (isLiked ? '#F6AE24' : '#fff')};
+  border-color: ${({ $isLiked }) => ($isLiked ? '#fff' : '#F6AE24')};
+  background: ${({ $isLiked }) => ($isLiked ? '#F6AE24' : '#fff')};
   transition:
     background 0.2s,
     border-color 0.2s,
@@ -234,14 +234,14 @@ const HookButton = styled.button<{ isLiked: boolean; animating: boolean }>`
   z-index: 2;
   box-sizing: border-box;
   overflow: hidden;
-  transform: ${({ animating }) => (animating ? 'scale(1.3)' : 'scale(1)')};
-  opacity: ${({ animating }) => (animating ? 0.7 : 1)};
+  transform: ${({ $animating }) => ($animating ? 'scale(1.3)' : 'scale(1)')};
+  opacity: ${({ $animating }) => ($animating ? 0.7 : 1)};
   img {
     width: 20px;
     height: 16px;
     display: block;
     transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    transform: ${({ animating }) => (animating ? 'scale(1.3)' : 'scale(1)')};
+    transform: ${({ $animating }) => ($animating ? 'scale(1.3)' : 'scale(1)')};
   }
   &::after {
     content: '';
@@ -253,7 +253,7 @@ const HookButton = styled.button<{ isLiked: boolean; animating: boolean }>`
     border-style: solid;
     border-width: 0 0 12px 12px;
     border-color: transparent transparent
-      ${({ isLiked }) => (isLiked ? '#fff' : '#F6AE24')} transparent;
+      ${({ $isLiked }) => ($isLiked ? '#fff' : '#F6AE24')} transparent;
     background: none;
     z-index: 3;
   }
