@@ -90,14 +90,21 @@ import NotFound from './pages/NotFound';
 
 import Cookies from 'js-cookie';
 import { Axios } from './api/Axios';
+import {
+  isNativeApp,
+  requestNativeLogin,
+  hasValidToken,
+  isProtectedRoute,
+} from './utils/nativeApp';
 
 const NativeLoginSync: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
 
   useEffect(() => {
-    function handleLoginInfoReceived(e: any) {
-      const loginInfo = e.detail;
+    function handleLoginInfoReceived(e: Event) {
+      const customEvent = e as CustomEvent;
+      const loginInfo = customEvent.detail;
       if (loginInfo.isLoggedIn && loginInfo.userInfo) {
         // 토큰 저장
         localStorage.setItem('accessToken', loginInfo.userInfo.token);
@@ -119,6 +126,28 @@ const NativeLoginSync: React.FC = () => {
         }
       }
     }
+
+    // 앱 초기화 시 토큰 체크
+    const checkInitialAuth = () => {
+      const token = hasValidToken();
+
+      if (!token && isProtectedRoute(location.pathname)) {
+        if (isNativeApp()) {
+          console.log(
+            '네이티브 앱에서 초기 로그인 토큰이 없습니다. 네이티브 로그인을 요청합니다.'
+          );
+          requestNativeLogin();
+        } else {
+          console.log(
+            '웹 환경에서 초기 로그인 토큰이 없습니다. 로그인 페이지로 이동합니다.'
+          );
+          navigate('/login', { replace: true });
+        }
+      }
+    };
+
+    // 초기 인증 체크 실행
+    checkInitialAuth();
 
     window.addEventListener('loginInfoReceived', handleLoginInfoReceived);
     return () => {

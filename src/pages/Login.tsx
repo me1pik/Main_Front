@@ -12,6 +12,7 @@ import { getMembershipInfo, MembershipInfo } from '../api/user/userApi';
 import MelpikLogo from '../assets/LoginLogo.svg';
 import { schemaLogin } from '../hooks/ValidationYup';
 import ReusableModal from '../components/ReusableModal';
+import { isNativeApp, saveNativeLoginInfo } from '../utils/nativeApp';
 
 type LoginFormValues = {
   email: string;
@@ -27,7 +28,7 @@ const Login: React.FC = () => {
   const navigate = useNavigate();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalMessage, setModalMessage] = useState('');
-  const [autoLogin, setAutoLogin] = useState(true);
+  const [autoLogin, setAutoLogin] = useState(false);
 
   const {
     control,
@@ -39,17 +40,21 @@ const Login: React.FC = () => {
     defaultValues: { email: '', password: '' },
   });
 
-  const handleModalClose = () => setIsModalOpen(false);
-
   useEffect(() => {
-    const auto = localStorage.getItem('autoLogin');
-    const email = localStorage.getItem('autoLoginEmail');
-    const password = localStorage.getItem('autoLoginPassword');
-    if (auto === 'true' && email && password) {
-      handleLoginClick({ email, password });
+    const savedAutoLogin = localStorage.getItem('autoLogin');
+    if (savedAutoLogin === 'true') {
+      setAutoLogin(true);
+      const savedEmail = localStorage.getItem('autoLoginEmail');
+      const savedPassword = localStorage.getItem('autoLoginPassword');
+      if (savedEmail && savedPassword) {
+        // 자동 로그인 시도
+        handleLoginClick({ email: savedEmail, password: savedPassword });
+      }
     }
     // eslint-disable-next-line
   }, []);
+
+  const handleModalClose = () => setIsModalOpen(false);
 
   const handleLoginClick = async (data: LoginFormValues) => {
     try {
@@ -73,8 +78,8 @@ const Login: React.FC = () => {
       }
 
       // === 네이티브 앱에 로그인 정보 전달 ===
-      if (window.nativeApp && window.nativeApp.saveLoginInfo) {
-        window.nativeApp.saveLoginInfo({
+      if (isNativeApp()) {
+        saveNativeLoginInfo({
           id: data.email, // 또는 서버에서 받은 user id
           email: data.email,
           name: '', // 필요하다면 서버에서 받은 이름
