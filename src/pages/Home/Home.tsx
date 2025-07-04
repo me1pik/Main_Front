@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useNavigate, useSearchParams, useLocation } from 'react-router-dom';
-import styled, { keyframes } from 'styled-components';
+import styled from 'styled-components';
 import Spinner from '../../components/Spinner';
 import ItemList, { UIItem } from '../../components/Home/ItemList';
 import Footer from '../../components/Home/Footer';
@@ -15,12 +15,7 @@ import HomeIcon from '../../assets/Header/HomeIcon.svg';
 import ArrowIconSvg from '../../assets/ArrowIcon.svg';
 import ReusableModal from '../../components/ReusableModal';
 import FilterContainer from '../../components/Home/FilterContainer';
-import { FaTh } from 'react-icons/fa';
-
-const fadeInDown = keyframes`
-  from { opacity: 0; transform: translateY(-10px); }
-  to { opacity: 1; transform: translateY(0); }
-`;
+import SearchIconSvg from '../../assets/Home/SearchIcon.svg';
 
 /**
  * Home(상품 리스트) 페이지 - 최적화 버전
@@ -49,14 +44,8 @@ const Home: React.FC = () => {
     return () => window.removeEventListener('resize', onResize);
   }, []);
 
-  // 컬럼 수
-  const [viewCols, setViewCols] = useState(isMobileView ? 2 : 4);
-  useEffect(() => {
-    setViewCols(isMobileView ? 2 : 4);
-  }, [isMobileView]);
-
-  // 모바일 뷰 여부
-  const [menuOpen, setMenuOpen] = useState(false);
+  // viewCols 상태 및 관련 로직 제거, 아래처럼 고정값으로 대체
+  const viewCols = isMobileView ? 2 : 4;
 
   // 카테고리/검색
   const [selectedCategory, setSelectedCategory] = useState(
@@ -65,6 +54,10 @@ const Home: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState(
     searchParams.get('search') || ''
   );
+  // 검색 모달 노출 상태
+  const [isSearchModalOpen, setSearchModalOpen] = useState(false);
+  // 검색 입력 임시 상태
+  const [searchInput, setSearchInput] = useState(searchQuery);
 
   // react-query 상품 데이터
   const {
@@ -156,13 +149,6 @@ const Home: React.FC = () => {
     setFeatureModalOpen(false);
   };
 
-  // 컬럼 옵션 선택
-  const selectCols = (n: number) => {
-    setViewCols(n);
-    setMenuOpen(false);
-  };
-  const colOptions = isMobileView ? [1, 2, 3] : [4, 5, 6];
-
   // 공유하기 핸들러
   const handleShare = async () => {
     const shareData = {
@@ -222,24 +208,59 @@ const Home: React.FC = () => {
 
       {/* 필터 및 열 선택 */}
       <ControlsContainer>
-        <DropdownToggle onClick={() => setMenuOpen((o) => !o)}>
-          <FaTh size={20} />
-        </DropdownToggle>
-        <FilterContainer />
-        {menuOpen && (
-          <DropdownMenu>
-            {colOptions.map((n) => (
-              <DropdownItem
-                key={n}
-                active={viewCols === n}
-                onClick={() => selectCols(n)}
-              >
-                <OptionNumber>{n}</OptionNumber>
-                <OptionText>열로 보기</OptionText>
-              </DropdownItem>
-            ))}
-          </DropdownMenu>
-        )}
+        <RowAlignBox>
+          {/* 검색 아이콘 */}
+          <IconButton onClick={() => setSearchModalOpen(true)}>
+            <img src={SearchIconSvg} alt='검색' />
+          </IconButton>
+          {/* 필터 아이콘 */}
+          <FilterContainer />
+        </RowAlignBox>
+        {/* 검색 모달 */}
+        <ReusableModal
+          isOpen={isSearchModalOpen}
+          onClose={() => setSearchModalOpen(false)}
+          title='제품 검색'
+        >
+          <ModalSearchBar>
+            <ModalSearchInput
+              type='text'
+              placeholder='브랜드 또는 설명으로 검색...'
+              value={searchInput}
+              autoFocus
+              onChange={(e) => setSearchInput(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  setSearchQuery(searchInput);
+                  setSearchParams(
+                    {
+                      ...Object.fromEntries(searchParams.entries()),
+                      search: searchInput,
+                    },
+                    { replace: true }
+                  );
+                  setSearchModalOpen(false);
+                }
+              }}
+            />
+            <ModalSearchIconButton
+              onClick={() => {
+                setSearchQuery(searchInput);
+                setSearchParams(
+                  {
+                    ...Object.fromEntries(searchParams.entries()),
+                    search: searchInput,
+                  },
+                  { replace: true }
+                );
+                setSearchModalOpen(false);
+              }}
+              aria-label='검색'
+            >
+              <img src={SearchIconSvg} alt='검색' />
+            </ModalSearchIconButton>
+          </ModalSearchBar>
+        </ReusableModal>
       </ControlsContainer>
 
       {/* 제품 리스트 or 로딩 스피너 */}
@@ -426,59 +447,6 @@ const Icon = styled.img`
   cursor: pointer;
 `;
 
-const DropdownToggle = styled.button`
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 6px;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-  background-color: #f9f9f9;
-  cursor: pointer;
-  transition: background-color 0.3s ease;
-  &:hover {
-    background-color: #e6e6e6;
-  }
-`;
-
-const DropdownMenu = styled.ul`
-  position: absolute;
-  right: calc(50px + 0);
-  top: calc(5px + 36px);
-  background: #fff;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  list-style: none;
-  padding: 8px 0;
-  margin: 0;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  min-width: 140px;
-  z-index: 10;
-  animation: ${fadeInDown} 0.25s ease-out;
-`;
-
-const DropdownItem = styled.li<{ active: boolean }>`
-  display: flex;
-  align-items: center;
-  padding: 8px 12px;
-  font-size: 14px;
-  cursor: pointer;
-  color: ${({ active }) => (active ? '#ff9d00' : '#333')};
-  background: ${({ active }) => (active ? '#fff7e6' : 'transparent')};
-  &:hover {
-    background: #f5f5f5;
-  }
-`;
-
-const OptionNumber = styled.span`
-  padding: 0 4px;
-  font-weight: 700;
-`;
-
-const OptionText = styled.span`
-  margin-left: 4px;
-`;
-
 const InfoList = styled.ol`
   margin: 12px 0 0 16px;
   padding: 0;
@@ -486,5 +454,77 @@ const InfoList = styled.ol`
   font-size: 14px;
   & li {
     margin-bottom: 8px;
+  }
+`;
+
+// row 정렬을 위한 래퍼
+const RowAlignBox = styled.div`
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+`;
+
+// 필터 아이콘과 동일한 스타일의 검색 아이콘 버튼
+const IconButton = styled.div`
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  img {
+    width: 16px;
+    height: 16px;
+    padding: 10px;
+    border-radius: 4px;
+    border: 1px solid #ccc;
+    background-color: #f9f9f9;
+    transition: background-color 0.3s ease;
+  }
+  &:hover img {
+    background-color: #e6e6e6;
+  }
+`;
+
+// 모달 내 검색 바(가로 배치, 버튼이 인풋 오른쪽)
+const ModalSearchBar = styled.div`
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  gap: 0;
+  margin-top: 18px;
+`;
+
+const ModalSearchInput = styled.input`
+  border: 1.5px solid #ccc;
+  border-radius: 6px 0 0 6px;
+  font-size: 17px;
+  padding: 12px 16px;
+  width: 260px;
+  outline: none;
+  box-sizing: border-box;
+  background: #fafafa;
+`;
+
+// 모달 내 검색 아이콘 버튼
+const ModalSearchIconButton = styled.button`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 48px;
+  width: 48px;
+
+  border: 1.5px solid #ccc;
+  border-left: none;
+  border-radius: 0 6px 6px 0;
+  cursor: pointer;
+  transition: background 0.2s;
+  padding: 0;
+  &:hover {
+    background: #ffbe4b;
+  }
+  img {
+    width: 20px;
+    height: 20px;
+    filter: brightness(0.7);
   }
 `;

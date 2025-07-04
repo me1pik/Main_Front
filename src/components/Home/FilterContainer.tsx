@@ -38,9 +38,9 @@ const FilterIconContainer = styled.div`
   cursor: pointer;
 
   img {
-    width: 22px;
-    height: 22px;
-    padding: 6px;
+    width: 20px;
+    height: 16px;
+    padding: 10px;
     border-radius: 4px;
     border: 1px solid #ccc;
     background-color: #f9f9f9;

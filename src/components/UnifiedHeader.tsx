@@ -16,7 +16,6 @@ import BackButtonIcon from '../assets/Header/BackButton.svg';
 import CancleIconIcon from '../assets/Header/CancleIcon.svg';
 import ShareIcon from '../assets/Header/ShareIcon.svg';
 import HomeIcon from '../assets/Header/HomeIcon.svg';
-import SearchIcon from '../assets/Header/SearchIcon.svg';
 
 import MypageModal from '../components/MypageModal';
 import ReusableModal from '../components/ReusableModal';
@@ -96,13 +95,6 @@ const SearchInput = styled.input<{ open?: boolean }>`
     width 0.3s ease,
     margin-left 0.3s ease,
     opacity 0.2s ease 0.1s;
-`;
-const SearchIconWrapper = styled.div`
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  flex-shrink: 0;
 `;
 
 const Dropdown = styled.ul`
@@ -269,13 +261,6 @@ const UnifiedHeader: React.FC<UnifiedHeaderProps> = ({
     setOpenSearch(false);
   };
 
-  const toggleSearch = () => {
-    setOpenSearch((o) => !o);
-    if (!openSearch) {
-      setTimeout(() => boxRef.current?.querySelector('input')?.focus(), 100);
-    }
-  };
-
   const handleBack = () => {
     if (onBack) onBack();
     else navigate(-1);
@@ -328,9 +313,7 @@ const UnifiedHeader: React.FC<UnifiedHeaderProps> = ({
                     placeholder='검색어를 입력하세요'
                   />
                 </form>
-                <SearchIconWrapper onClick={toggleSearch}>
-                  <Icon src={SearchIcon} alt='검색' />
-                </SearchIconWrapper>
+
                 {openSearch && historyState.length > 0 && (
                   <Dropdown>
                     {historyState.map((item, idx) => (
@@ -425,9 +408,7 @@ const UnifiedHeader: React.FC<UnifiedHeaderProps> = ({
                     placeholder='검색어를 입력하세요'
                   />
                 </form>
-                <SearchIconWrapper onClick={toggleSearch}>
-                  <Icon src={SearchIcon} alt='검색' />
-                </SearchIconWrapper>
+
                 {openSearch && historyState.length > 0 && (
                   <Dropdown>
                     {historyState.map((item, idx) => (
