@@ -2,7 +2,10 @@ import React, { useState } from 'react';
 import styled from 'styled-components';
 
 export interface SizeInfoProps {
-  productSizes: { size: string; measurements: Record<string, any> }[];
+  productSizes: {
+    size: string;
+    measurements: Record<string, string | number>;
+  }[];
   size_picture: string;
   /** key → label 매핑(서버에서 내려오는 값) */
   labelGuide?: Record<string, string>;
@@ -32,12 +35,12 @@ const SizeInfo: React.FC<SizeInfoProps> = ({
   const measurementKeys = Object.keys(productSizes[0].measurements || {});
   const sortedKeys = measurementKeys.sort((a, b) => a.localeCompare(b));
 
-  // 서버에서 labelGuide가 내려오면 그 값을, 아니면 알파벳 순서 기본 라벨
-  const columnLabels = sortedKeys.map((key, idx) =>
-    labelGuide && labelGuide[key]
-      ? labelGuide[key]
-      : String.fromCharCode(65 + idx)
-  );
+  // 항상 ABCDE 라벨을 사용하되, labelGuide가 있으면 설명을 포함
+  const columnLabels = sortedKeys.map((key, idx) => {
+    const baseLabel = String.fromCharCode(65 + idx);
+    const description = labelGuide && labelGuide[key] ? labelGuide[key] : '';
+    return description ? `${baseLabel}.${description}` : baseLabel;
+  });
 
   const formatSize = (raw: string) => {
     if (/free/i.test(raw)) return 'Free';
@@ -60,11 +63,21 @@ const SizeInfo: React.FC<SizeInfoProps> = ({
           />
         </PictureWrapper>
 
-        <LabelList>
-          {sortedKeys.map((key) => (
-            <LabelItem key={key}>{key}</LabelItem>
-          ))}
-        </LabelList>
+        <LabelInfoContainer>
+          <LabelList>
+            {sortedKeys.map((key, idx) => {
+              const baseLabel = String.fromCharCode(65 + idx);
+              const description =
+                labelGuide && labelGuide[key] ? labelGuide[key] : '';
+              return (
+                <LabelItem key={key}>
+                  <LabelKey>{baseLabel}</LabelKey>
+                  <LabelDescription>{description || key}</LabelDescription>
+                </LabelItem>
+              );
+            })}
+          </LabelList>
+        </LabelInfoContainer>
       </InfoWrapper>
 
       <TableWrapper>
@@ -116,11 +129,10 @@ const Title = styled.h3`
 `;
 
 const InfoWrapper = styled.div`
-  display: grid;
-  grid-template-columns: auto 120px;
-  align-items: center;
+  display: flex;
+  align-items: flex-start;
   justify-content: center;
-  gap: 12px;
+  gap: 20px;
   width: 100%;
   max-width: 1000px;
   margin-bottom: 16px;
@@ -145,30 +157,49 @@ const StyledImg = styled.img`
   image-rendering: crisp-edges;
 `;
 
+const LabelInfoContainer = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 200px;
+`;
+
 const LabelList = styled.ul`
   display: flex;
-  flex-direction: row;
-  flex-wrap: wrap;
-  justify-content: center;
-  align-items: center;
+  flex-direction: column;
   list-style: none;
   margin: 0;
   padding: 0;
-  gap: 10px;
-  width: 100%;
+  gap: 8px;
 `;
 
 const LabelItem = styled.li`
-  font-size: 14px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px;
+  background-color: #f8f8f8;
+  border-radius: 6px;
+  border: 1px solid #e0e0e0;
+`;
+
+const LabelKey = styled.span`
+  font-size: 12px;
+  font-weight: 700;
+  color: #f6ae24;
+  background-color: #fff;
+  padding: 2px 6px;
+  border-radius: 4px;
+  border: 1px solid #f6ae24;
+  min-width: 20px;
+  text-align: center;
+`;
+
+const LabelDescription = styled.span`
+  font-size: 12px;
   font-weight: 500;
   color: #333;
-  padding: 6px 10px;
-  border-radius: 4px;
-
-  @media (min-width: 1024px) {
-    font-size: 16px;
-    padding: 10px 14px;
-  }
+  flex: 1;
 `;
 
 const TableWrapper = styled.div`
