@@ -1,6 +1,12 @@
 // src/pages/Home.tsx
 
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, {
+  useState,
+  useEffect,
+  useMemo,
+  useCallback,
+  useRef,
+} from 'react';
 import { useNavigate, useSearchParams, useLocation } from 'react-router-dom';
 import styled from 'styled-components';
 import Spinner from '../../components/Spinner';
@@ -135,6 +141,33 @@ const Home: React.FC = () => {
     () => window.scrollTo({ top: 0, behavior: 'smooth' }),
     []
   );
+
+  // 검색 결과 없음 카운트다운
+  const [noResultCountdown, setNoResultCountdown] = useState(3);
+  const countdownRef = useRef<NodeJS.Timeout | null>(null);
+
+  useEffect(() => {
+    if (!isLoading && uiItems.length === 0 && searchQuery) {
+      setNoResultCountdown(3);
+      if (countdownRef.current) clearInterval(countdownRef.current);
+      countdownRef.current = setInterval(() => {
+        setNoResultCountdown((prev) => {
+          if (prev <= 1) {
+            clearInterval(countdownRef.current!);
+            setSearchQuery('');
+            setSelectedCategory('All');
+            setSearchParams({ category: 'All' }, { replace: true });
+            return 3;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+    }
+    return () => {
+      if (countdownRef.current) clearInterval(countdownRef.current);
+    };
+    // eslint-disable-next-line
+  }, [isLoading, uiItems.length, searchQuery]);
 
   if (isError)
     return <div>상품을 불러오는 데 실패했습니다: {String(error)}</div>;
@@ -307,6 +340,14 @@ const Home: React.FC = () => {
       <ContentWrapper>
         {isLoading ? (
           <Spinner />
+        ) : uiItems.length === 0 && searchQuery ? (
+          <NoResultText>
+            검색 결과가 없습니다
+            <br />
+            <CountdownText>
+              {noResultCountdown}초 후 전체 카테고리로 돌아갑니다
+            </CountdownText>
+          </NoResultText>
         ) : (
           <ItemList
             items={uiItems}
@@ -613,3 +654,22 @@ const HistoryItem = styled.li`
 
 // 최근 검색어 최대 개수
 const MAX_HISTORY = 8;
+
+// 검색 결과 없음 텍스트
+const NoResultText = styled.div`
+  width: 100%;
+  text-align: center;
+  color: #888;
+  font-size: 18px;
+  font-weight: 500;
+  padding: 60px 0 80px 0;
+  letter-spacing: -0.5px;
+`;
+
+// 카운트다운 텍스트
+const CountdownText = styled.div`
+  margin-top: 18px;
+  font-size: 15px;
+  color: #f6ae24;
+  font-weight: 600;
+`;
