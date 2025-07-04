@@ -543,7 +543,8 @@ const RowAlignBox = styled.div`
   display: flex;
   flex-direction: row;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
+  margin-top: 20px;
 `;
 
 // 필터 아이콘과 동일한 스타일의 검색 아이콘 버튼
