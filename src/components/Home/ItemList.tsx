@@ -68,10 +68,12 @@ const ListContainer = styled.div`
   background-color: #fff;
   margin: 0 auto;
   box-sizing: border-box;
+  width: 100%;
 `;
 
 const ItemsWrapper = styled.div<{ columns: number }>`
   display: grid;
   gap: 16px;
+
   grid-template-columns: repeat(${({ columns }) => columns}, minmax(0, 1fr));
 `;
