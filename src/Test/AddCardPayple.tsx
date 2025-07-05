@@ -8,6 +8,12 @@ interface UserInfo {
   userEmail: string;
 }
 
+declare global {
+  interface Window {
+    PaypleCpayAuthCheck?: (data: unknown) => void;
+  }
+}
+
 const AddCardPayple: React.FC = () => {
   const [userInfo, setUserInfo] = useState<UserInfo | null>(null);
   const [error, setError] = useState<string | null>(null);

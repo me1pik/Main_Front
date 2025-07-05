@@ -1,6 +1,22 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import styled from 'styled-components';
 
+declare global {
+  interface Window {
+    PaypleCpayAuthCheck?: (data: unknown) => void;
+    PCD_PAY_CALLBACK?: (result: unknown) => void;
+  }
+}
+
+// Payple 카드 타입 정의
+interface PaypleCard {
+  payerId: string;
+  cardId: string | number;
+  cardName: string;
+  cardNumber: string;
+  [key: string]: unknown;
+}
+
 const PaypleTest: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
@@ -9,7 +25,7 @@ const PaypleTest: React.FC = () => {
     userName: string;
     userEmail: string;
   } | null>(null);
-  const [cards, setCards] = useState<any[]>([]);
+  const [cards, setCards] = useState<PaypleCard[]>([]);
 
   useEffect(() => {
     (async () => {
@@ -31,9 +47,13 @@ const PaypleTest: React.FC = () => {
           userName: data.name,
           userEmail: data.email,
         });
-      } catch (e: any) {
-        console.error('[🔥] 유저 정보 로딩 실패', e);
-        setError('로그인 정보를 불러오는 데 실패했습니다.');
+      } catch (e: unknown) {
+        if (e instanceof Error) {
+          console.error('[🔥] 유저 정보 로딩 실패', e);
+          setError('로그인 정보를 불러오는 데 실패했습니다. ' + e.message);
+        } else {
+          setError('로그인 정보를 불러오는 데 실패했습니다.');
+        }
       }
     })();
   }, []);
@@ -53,8 +73,12 @@ const PaypleTest: React.FC = () => {
         if (!res.ok) throw new Error('카드 목록 요청 실패');
         const data = await res.json();
         setCards(data.items);
-      } catch (err) {
-        console.error('[🔥] 카드 목록 로딩 실패', err);
+      } catch (err: unknown) {
+        if (err instanceof Error) {
+          console.error('[🔥] 카드 목록 로딩 실패', err);
+        } else {
+          console.error('[🔥] 카드 목록 로딩 실패', err);
+        }
       }
     };
 
@@ -100,9 +124,14 @@ const PaypleTest: React.FC = () => {
         PCD_PAY_GOODS: '카드 등록 테스트',
         PCD_PAY_TOTAL: 101,
       });
-    } catch (e: any) {
-      console.error('[🔥] 카드 등록 오류:', e);
-      setError('카드 등록 중 오류 발생: ' + e.message);
+    } catch (e: unknown) {
+      if (e instanceof Error) {
+        console.error('[🔥] 카드 등록 오류:', e);
+        setError('카드 등록 중 오류 발생: ' + e.message);
+      } else {
+        console.error('[🔥] 카드 등록 오류:', e);
+        setError('카드 등록 중 오류 발생');
+      }
     }
   }, [userInfo]);
 
@@ -128,9 +157,14 @@ const PaypleTest: React.FC = () => {
       if (typeof window.PaypleCpayAuthCheck !== 'function')
         throw new Error('Payple SDK 준비 오류');
       window.PaypleCpayAuthCheck(data);
-    } catch (e) {
-      console.error('[🔥] 결제창 호출 실패', e);
-      alert('결제창 호출 중 오류 발생');
+    } catch (e: unknown) {
+      if (e instanceof Error) {
+        console.error('[🔥] 결제창 호출 실패', e);
+        alert('결제창 호출 중 오류 발생');
+      } else {
+        console.error('[🔥] 결제창 호출 실패', e);
+        alert('결제창 호출 중 오류 발생');
+      }
     }
   };
 
@@ -138,30 +172,53 @@ const PaypleTest: React.FC = () => {
     window.PCD_PAY_CALLBACK = async (result: unknown) => {
       console.log('[✅ Payple 결과 수신]', result);
       if (!userInfo) return setError('로그인 정보를 찾을 수 없습니다.');
-
-      try {
-        const res = await fetch(
-          'https://api.stylewh.com/payple/confirm-payment',
-          {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              PCD_AUTH_KEY: result.PCD_AUTH_KEY,
-              PCD_PAY_REQKEY: result.PCD_PAY_REQKEY,
-              PCD_PAYER_ID: result.PCD_PAYER_ID,
-              PCD_PAY_GOODS: result.PCD_PAY_GOODS,
-              PCD_PAY_TOTAL: result.PCD_PAY_TOTAL,
-            }),
+      if (
+        typeof result === 'object' &&
+        result !== null &&
+        'PCD_AUTH_KEY' in result &&
+        'PCD_PAY_REQKEY' in result &&
+        'PCD_PAYER_ID' in result &&
+        'PCD_PAY_GOODS' in result &&
+        'PCD_PAY_TOTAL' in result
+      ) {
+        const r = result as {
+          PCD_AUTH_KEY: string;
+          PCD_PAY_REQKEY: string;
+          PCD_PAYER_ID: string;
+          PCD_PAY_GOODS: string;
+          PCD_PAY_TOTAL: number;
+        };
+        try {
+          const res = await fetch(
+            'https://api.stylewh.com/payple/confirm-payment',
+            {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                PCD_AUTH_KEY: r.PCD_AUTH_KEY,
+                PCD_PAY_REQKEY: r.PCD_PAY_REQKEY,
+                PCD_PAYER_ID: r.PCD_PAYER_ID,
+                PCD_PAY_GOODS: r.PCD_PAY_GOODS,
+                PCD_PAY_TOTAL: r.PCD_PAY_TOTAL,
+              }),
+            }
+          );
+          const data = await res.json();
+          if (!res.ok || data.PCD_PAY_RST !== 'success') {
+            throw new Error(data.PCD_PAY_MSG || '결제 실패');
           }
-        );
-        const data = await res.json();
-        if (!res.ok || data.PCD_PAY_RST !== 'success') {
-          throw new Error(data.PCD_PAY_MSG || '결제 실패');
+          setSuccessMessage('✅ 결제 성공: ' + data.PCD_PAY_OID);
+        } catch (e: unknown) {
+          if (e instanceof Error) {
+            console.error('[🔥] 결제 승인 오류:', e);
+            setError('결제 승인 실패: ' + e.message);
+          } else {
+            console.error('[🔥] 결제 승인 오류:', e);
+            setError('결제 승인 실패');
+          }
         }
-        setSuccessMessage('✅ 결제 성공: ' + data.PCD_PAY_OID);
-      } catch (e: any) {
-        console.error('[🔥] 결제 승인 오류:', e);
-        setError('결제 승인 실패: ' + e.message);
+      } else {
+        setError('Payple 결과 데이터 형식 오류');
       }
     };
     return () => {
@@ -196,7 +253,13 @@ const PaypleTest: React.FC = () => {
             .then((data) =>
               alert('정기결제 성공! 주문번호: ' + data.PCD_PAY_OID)
             )
-            .catch((err) => alert('정기결제 실패: ' + err.message));
+            .catch((err: unknown) => {
+              if (err instanceof Error) {
+                alert('정기결제 실패: ' + err.message);
+              } else {
+                alert('정기결제 실패');
+              }
+            });
         }}
       >
         정기결제 테스트
