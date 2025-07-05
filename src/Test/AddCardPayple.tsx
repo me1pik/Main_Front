@@ -8,13 +8,6 @@ interface UserInfo {
   userEmail: string;
 }
 
-declare global {
-  interface Window {
-    PaypleCpayAuthCheck?: (data: any) => void;
-    PCD_PAY_CALLBACK?: (result: any) => void;
-  }
-}
-
 const AddCardPayple: React.FC = () => {
   const [userInfo, setUserInfo] = useState<UserInfo | null>(null);
   const [error, setError] = useState<string | null>(null);

@@ -1,13 +1,6 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import styled from 'styled-components';
 
-declare global {
-  interface Window {
-    PaypleCpayAuthCheck?: (data: any) => void;
-    PCD_PAY_CALLBACK?: (result: any) => void;
-  }
-}
-
 const PaypleTest: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
@@ -115,7 +108,6 @@ const PaypleTest: React.FC = () => {
 
   const requestPayPasswordPopup = async (payerId: string) => {
     try {
-
       console.log('🧾 PAYER_ID to use:', payerId);
       if (!payerId || typeof payerId !== 'string' || payerId.trim() === '') {
         alert('유효한 카드가 없습니다.');
@@ -143,7 +135,7 @@ const PaypleTest: React.FC = () => {
   };
 
   useEffect(() => {
-    window.PCD_PAY_CALLBACK = async (result: any) => {
+    window.PCD_PAY_CALLBACK = async (result: unknown) => {
       console.log('[✅ Payple 결과 수신]', result);
       if (!userInfo) return setError('로그인 정보를 찾을 수 없습니다.');
 
@@ -184,33 +176,39 @@ const PaypleTest: React.FC = () => {
         카드 등록하기
       </Button>
 
-       <Button onClick={() => {
-      const payerId = cards[0]?.payerId;
-      if (!payerId) return alert('카드 없음');
-    
-      fetch('https://api.stylewh.com/payple/recurring-payment', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          payerId,
-          goods: '정기결제 테스트 상품',
-          amount: 500, // 500원
-        }),
-      })
-        .then((res) => res.json())
-        .then((data) => alert('정기결제 성공! 주문번호: ' + data.PCD_PAY_OID))
-        .catch((err) => alert('정기결제 실패: ' + err.message));
-    }}>
-      정기결제 테스트
-    </Button>
+      <Button
+        onClick={() => {
+          const payerId = cards[0]?.payerId;
+          if (!payerId) return alert('카드 없음');
+
+          fetch('https://api.stylewh.com/payple/recurring-payment', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              payerId,
+              goods: '정기결제 테스트 상품',
+              amount: 500, // 500원
+            }),
+          })
+            .then((res) => res.json())
+            .then((data) =>
+              alert('정기결제 성공! 주문번호: ' + data.PCD_PAY_OID)
+            )
+            .catch((err) => alert('정기결제 실패: ' + err.message));
+        }}
+      >
+        정기결제 테스트
+      </Button>
       {cards.length > 0 && (
         <CardSection>
           <h3>등록된 카드 목록</h3>
           {cards.map((card) => (
             <CardBox key={card.cardId}>
-              <div>{card.cardName} - {card.cardNumber}</div>
+              <div>
+                {card.cardName} - {card.cardNumber}
+              </div>
               <CardButton onClick={() => requestPayPasswordPopup(card.payerId)}>
                 이 카드로 결제
               </CardButton>
@@ -219,7 +217,7 @@ const PaypleTest: React.FC = () => {
         </CardSection>
       )}
 
-      {error && <Message type="error">{error}</Message>}
+      {error && <Message type='error'>{error}</Message>}
       {successMessage && <Message>{successMessage}</Message>}
     </Container>
   );
