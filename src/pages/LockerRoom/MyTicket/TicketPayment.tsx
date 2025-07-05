@@ -23,6 +23,20 @@ export interface CardItem {
   createdAt: string;
 }
 
+// NativeApp 타입 정의 (global 확장 없이 타입만 선언)
+interface NativeApp {
+  addCard: () => void;
+  requestLogin?: () => void;
+  saveLoginInfo?: (data: Record<string, unknown>) => void;
+}
+
+// PaypleCpayAuthCheck 타입 선언 (window에 임시 확장)
+declare global {
+  interface Window {
+    PaypleCpayAuthCheck?: (data: unknown) => void;
+  }
+}
+
 const TicketPayment: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -47,7 +61,15 @@ const TicketPayment: React.FC = () => {
 
   // 팝업 윈도우에서 결제 결과를 부모 윈도우에 전달 (1회 결제용)
   useEffect(() => {
-    (window as any).PCD_PAY_CALLBACK = (result: any) => {
+    interface PayCallbackResult {
+      status: string;
+      [key: string]: unknown;
+    }
+    (
+      window as unknown as {
+        PCD_PAY_CALLBACK: (result: PayCallbackResult) => void;
+      }
+    ).PCD_PAY_CALLBACK = (result: PayCallbackResult) => {
       if (window.opener) {
         window.opener.postMessage(
           {
@@ -92,10 +114,20 @@ const TicketPayment: React.FC = () => {
 
   const handleSelectChange = (val: string) => {
     if (val === '카드 추가하기') {
-      navigate('/payment-method');
+      handleCardAddClick();
       return;
     }
     setSelectedPaymentMethod(val);
+  };
+
+  const handleCardAddClick = () => {
+    if (typeof window.nativeApp !== 'undefined') {
+      // 네이티브 앱에서 카드 추가 화면 표시
+      (window.nativeApp as NativeApp)?.addCard();
+    } else {
+      // 웹 환경에서는 기존 웹 카드 추가 로직 실행
+      showWebCardAddForm();
+    }
   };
 
   const handlePaymentClick = async () => {
@@ -114,7 +146,7 @@ const TicketPayment: React.FC = () => {
     try {
       if (name === '1회 이용권') {
         const response = await postInitPayment(requestData);
-        (window as any).PaypleCpayAuthCheck(response.data);
+        window.PaypleCpayAuthCheck?.(response.data);
       } else if (
         name === '정기 구독권(4회권)' ||
         name === '정기 구독권(무제한)'
@@ -130,14 +162,66 @@ const TicketPayment: React.FC = () => {
         alert('알 수 없는 이용권 유형입니다.');
         setIsProcessing(false);
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('결제 실패:', error);
-      const errMsg =
-        error.response?.data?.message || error.message || '알 수 없는 오류';
+      const errMsg = getErrorMessage(error);
       alert(`결제 실패: ${errMsg}`);
       navigate('/payment-fail');
     }
   };
+
+  useEffect(() => {
+    // 카드 추가 완료 이벤트
+    const onCardAddComplete = (
+      event: CustomEvent<{ success: boolean; errorMessage?: string }>
+    ) => {
+      const { success, errorMessage } = event.detail;
+      if (success) {
+        // 카드 추가 성공 처리 (예: 카드 목록 새로고침)
+        refreshCardList();
+      } else {
+        // 카드 추가 실패 처리 (예: 에러 메시지 표시)
+        showErrorMessage(errorMessage || '카드 추가에 실패했습니다.');
+      }
+    };
+
+    // 네이티브 로그인 성공 이벤트
+    const onNativeLoginSuccess = (
+      event: CustomEvent<{
+        userId: string;
+        userEmail: string;
+        userName: string;
+        accessToken: string;
+      }>
+    ) => {
+      const { userId, userEmail, userName, accessToken } = event.detail;
+      localStorage.setItem('accessToken', accessToken);
+      localStorage.setItem('userId', userId);
+      localStorage.setItem('userEmail', userEmail);
+      localStorage.setItem('userName', userName);
+      updateLoginState(true);
+    };
+
+    document.addEventListener(
+      'cardAddComplete',
+      onCardAddComplete as EventListener
+    );
+    document.addEventListener(
+      'nativeLoginSuccess',
+      onNativeLoginSuccess as EventListener
+    );
+
+    return () => {
+      document.removeEventListener(
+        'cardAddComplete',
+        onCardAddComplete as EventListener
+      );
+      document.removeEventListener(
+        'nativeLoginSuccess',
+        onNativeLoginSuccess as EventListener
+      );
+    };
+  }, []);
 
   return (
     <Container>
@@ -362,3 +446,43 @@ const RowPeriod = styled.span`
   line-height: 22px;
   color: #000000;
 `;
+
+// 2. showWebCardAddForm 함수 정의
+function showWebCardAddForm() {
+  alert('웹 카드 추가 폼을 여는 로직을 구현하세요.');
+}
+
+// refreshCardList, showErrorMessage, updateLoginState 함수 간단 정의 추가
+function refreshCardList() {
+  // 카드 목록 새로고침 로직 구현
+  console.log('카드 목록 새로고침');
+}
+function showErrorMessage(message: string) {
+  // 에러 메시지 표시 로직 구현
+  alert(message);
+}
+function updateLoginState(isLoggedIn: boolean) {
+  // 로그인 상태 UI 업데이트 로직 구현
+  console.log('로그인 상태:', isLoggedIn);
+}
+
+// error에서 메시지를 추출하는 타입 가드 함수
+function getErrorMessage(error: unknown): string {
+  if (typeof error === 'object' && error !== null) {
+    if (
+      'response' in error &&
+      typeof (error as { response?: { data?: { message?: string } } }).response
+        ?.data?.message === 'string'
+    ) {
+      return (error as { response: { data: { message: string } } }).response
+        .data.message;
+    }
+    if (
+      'message' in error &&
+      typeof (error as { message?: string }).message === 'string'
+    ) {
+      return (error as { message: string }).message;
+    }
+  }
+  return '알 수 없는 오류';
+}
